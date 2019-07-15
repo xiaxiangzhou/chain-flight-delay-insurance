@@ -13,30 +13,33 @@ import { ContentPadding } from "../common/styles/style-padding";
 import { assetURL } from "./asset-url";
 import { ErrorPage } from "./error-page";
 
-export function ActionNotFound(): JSX.Element {
-  return (
-    <>
-      <Helmet title={`${t("action.notFound")} - IoTeX`} />
-      <ContentPadding>
-        <Navigation />
-        <Flex
-          width={"100%"}
-          column={true}
-          alignItems={"baselines"}
-          backgroundColor={colors.white}
-        >
-          <PageTitle>
-            <Icon type="project" /> {t("action.action")}
-          </PageTitle>
-          <Divider orientation="left">{t("title.overview")}</Divider>
-          <ErrorPage
-            bg={assetURL("/action-not-found.png")}
-            bar={t("not_found.bar")}
-            info={t("action.notFound")}
-            title={t("not_found.title")}
-          ></ErrorPage>
-        </Flex>
-      </ContentPadding>
-    </>
-  );
-}
+type Props = {
+  info?: string;
+};
+
+export const ActionNotFound = ({ info }: Props): JSX.Element => (
+  <>
+    <Helmet title={`${t("action.notFound")} - IoTeX`} />
+    <ContentPadding>
+      <Navigation />
+      <Flex
+        width={"100%"}
+        column={true}
+        alignItems={"baselines"}
+        backgroundColor={colors.white}
+      >
+        <PageTitle>
+          <Icon type="project" /> {t("action.action")}
+        </PageTitle>
+        <Divider orientation="left">{t("title.overview")}</Divider>
+        <ErrorPage
+          bg={assetURL("/action-not-found.png")}
+          bar={t("not_found.bar")}
+          info={t("action.notFound")}
+          title={t("not_found.title")}
+          subTitle={`${t("action.pending")} ${info}`}
+        ></ErrorPage>
+      </Flex>
+    </ContentPadding>
+  </>
+);

@@ -41,6 +41,7 @@ action.action: Azione
 action.sender: Mittente
 action.recipient: Destinatario
 action.notFound: piacenti, non siamo in grado di individuare questa transazione Hash
+action.pending: IoTeX in attesa di azione
 title.action: Azione
 render.key.height: Altezza
 render.key.hash: Hash

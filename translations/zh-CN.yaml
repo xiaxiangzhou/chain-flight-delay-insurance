@@ -41,6 +41,7 @@ action.action: 行动
 action.sender: 发送方
 action.recipient: 接收方
 action.notFound: 抱歉，我们无法找到此交易哈希
+action.pending: IoTeX等待行动
 title.action: 操作
 render.key.height: 高度
 render.key.hash: 哈希

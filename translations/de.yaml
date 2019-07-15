@@ -41,6 +41,7 @@ action.action: Aktion
 action.sender: Absender
 action.recipient: Empfänger
 action.notFound: Leider können wir diese Transaktion nicht finden. Hash
+action.pending: Ausstehende IoTeX-Aktion
 title.action: Aktion
 render.key.height: Blockhöhe
 render.key.hash: Hash

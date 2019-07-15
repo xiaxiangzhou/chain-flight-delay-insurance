@@ -41,6 +41,7 @@ action.action: Action
 action.sender: Sender
 action.recipient: Recipient
 action.notFound: Sorry, we are unable to locate this transaction Hash
+action.pending: IoTeX Pending Action
 title.action: Action
 render.key.height: Height
 render.key.hash: Hash

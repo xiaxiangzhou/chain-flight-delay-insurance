@@ -153,9 +153,6 @@ class ActionDetailsInner extends PureComponent<Props> {
   }
 
   public render(): JSX.Element {
-    if (this.state.error) {
-      return <ActionNotFound />;
-    }
     const {
       match: {
         params: { hash }
@@ -163,6 +160,10 @@ class ActionDetailsInner extends PureComponent<Props> {
       showContentPadding = true,
       showNavigation = true
     } = this.props;
+
+    if (this.state.error) {
+      return <ActionNotFound info={hash} />;
+    }
 
     const Root = showContentPadding ? ContentPadding : NonePadding;
     const { loading, dataSource, action } = this.state;
