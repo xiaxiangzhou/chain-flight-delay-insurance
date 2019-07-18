@@ -44,6 +44,7 @@ type State = {
   } | null;
   showConfirmTransfer: boolean;
   showDataHex: boolean;
+  gasCostLimit: number;
 };
 
 class TransferForm extends React.PureComponent<Props, State> {
@@ -52,7 +53,8 @@ class TransferForm extends React.PureComponent<Props, State> {
     txHash: "",
     broadcast: null,
     showConfirmTransfer: false,
-    showDataHex: true
+    showDataHex: true,
+    gasCostLimit: 0
   };
 
   public sendTransfer = async (status: boolean) => {
@@ -234,7 +236,6 @@ class TransferForm extends React.PureComponent<Props, State> {
     const { form } = this.props;
     const { getFieldDecorator } = form;
     const { sending } = this.state;
-
     return (
       <Form layout="vertical">
         <Form.Item
@@ -253,8 +254,14 @@ class TransferForm extends React.PureComponent<Props, State> {
           )}
         </Form.Item>
         {this.renderAmountFormItem()}
-        <GasPriceFormInputItem form={form} />
-        <GasLimitFormInputItem form={form} />
+        <GasPriceFormInputItem
+          form={form}
+          onChange={this.updateGasCostLimit(form)}
+        />
+        <GasLimitFormInputItem
+          form={form}
+          onChange={this.updateGasCostLimit(form)}
+        />
         {this.state.showDataHex && (
           <Form.Item
             label={<FormItemLabel>{t("wallet.input.dib")}</FormItemLabel>}
@@ -267,6 +274,20 @@ class TransferForm extends React.PureComponent<Props, State> {
             )}
           </Form.Item>
         )}
+        <Form.Item
+          label={
+            <FormItemLabel>{t("wallet.input.gasCostLimit")}</FormItemLabel>
+          }
+          {...formItemLayout}
+        >
+          <Input
+            readOnly={true}
+            style={inputStyle}
+            placeholder="0.1 IOTX"
+            name="gasCostLimit"
+            value={this.state.gasCostLimit}
+          />
+        </Form.Item>
         {
           // @ts-ignore
           <Button
@@ -344,6 +365,12 @@ class TransferForm extends React.PureComponent<Props, State> {
         showModal={showConfirmTransfer}
       />
     );
+  };
+
+  public updateGasCostLimit = (form: WrappedFormUtils) => {
+    const { gasLimit, gasPrice } = form.getFieldsValue();
+    const gasCostLimit = gasPrice * gasLimit;
+    this.setState({ gasCostLimit });
   };
 
   public render(): JSX.Element {

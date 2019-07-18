@@ -206,6 +206,7 @@ wallet.input.to: Empfängeradresse
 wallet.input.nonce: Nonce
 wallet.input.gasPrice: Gaspreis
 wallet.input.gasLimit: Gaslimit
+wallet.input.gasCostLimit: Gaskostenlimit
 wallet.input.abi: ABI/JSON-Interface
 wallet.input.byteCode: Bytecode
 wallet.input.solidity: 'Solidity (optional)'

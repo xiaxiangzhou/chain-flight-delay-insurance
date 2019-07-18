@@ -206,6 +206,7 @@ wallet.input.to: 接受者地址
 wallet.input.nonce: Nonce
 wallet.input.gasPrice: 'Gas 价格'
 wallet.input.gasLimit: 'Gas 限制'
+wallet.input.gasCostLimit: '燃气成本限制'
 wallet.input.abi: 'ABI / JSON 接口'
 wallet.input.byteCode: 字节代码
 wallet.input.solidity: Solidity（可选）

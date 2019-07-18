@@ -207,6 +207,7 @@ wallet.input.to: "Recipient address"
 wallet.input.nonce: Nonce
 wallet.input.gasPrice: "Gas Price"
 wallet.input.gasLimit: "Gas Limit"
+wallet.input.gasCostLimit: "Gas Cost Limit"
 wallet.input.abi: "ABI / JSON Interface"
 wallet.input.byteCode: "Byte Code"
 wallet.input.solidity: "Solidity (optional)"
