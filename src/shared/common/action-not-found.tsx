@@ -11,11 +11,14 @@ type Props = {
 };
 
 export const ActionNotFound = ({ info }: Props): JSX.Element => (
-  <ErrorPage
-    bg={assetURL("/action-not-found.png")}
-    bar={t("not_found.bar")}
-    info={t("action.notFound")}
-    title={t("not_found.title")}
-    subTitle={`${t("action.pending")} ${info}`}
-  ></ErrorPage>
+  <>
+    <Helmet title={`${t("action.notFound")} - IoTeX`} />
+    <ErrorPage
+      bg={assetURL("/action-not-found.png")}
+      bar={t("not_found.bar")}
+      info={t("action.notFound")}
+      title={t("not_found.title")}
+      subTitle={`${t("action.pending")} ${info}`}
+    ></ErrorPage>
+  </>
 );
