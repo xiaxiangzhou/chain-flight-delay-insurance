@@ -13,8 +13,11 @@ import onErrorLink from "./apollo-error-handling";
 
 const state = isBrowser && JsonGlobal("state");
 const apolloState = isBrowser && state.apolloState;
+const apolloAnalyticsState = isBrowser && state.apolloAnalyticsState;
 const apiGatewayUrl = isBrowser && state.base.apiGatewayUrl;
+const analyticsApiGatewayUrl = isBrowser && state.base.analyticsApiGatewayUrl;
 const csrfToken = isBrowser && state.base.csrfToken;
+
 
 const apolloClientConfig = {
   uri: apiGatewayUrl
@@ -45,3 +48,14 @@ export const setApolloClientEndpoint = (url: string) => {
 export const webBpApolloClient = createWebBpApolloClient(
   "https://member.iotex.io/api-gateway/"
 );
+
+const httpAnalyticsLink = new HttpLink({
+  uri: analyticsApiGatewayUrl || "https://analytics.iotexscan.io/query",
+  fetch
+});
+
+export const analyticsClient = new ApolloClient({
+  ssrMode: !isBrowser,
+  link: httpAnalyticsLink,
+  cache: new InMemoryCache().restore(apolloAnalyticsState)
+});
