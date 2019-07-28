@@ -4,6 +4,7 @@ import RpcMethod from "iotex-antenna/lib/rpc-method/node-rpc-method";
 // @ts-ignore
 import { Config, Server } from "onefx/lib/server";
 import { AntennaResolver } from "../api-gateway/resolvers/antenna";
+import { FlightsResolver } from "../api-gateway/resolvers/flight";
 import { MetaResolver } from "../api-gateway/resolvers/meta";
 import { setModel } from "../model";
 import "../shared/common/setup-big-number";
@@ -12,7 +13,9 @@ import { setMiddleware } from "./middleware";
 import { setServerRoutes } from "./server-routes";
 
 export type MyServer = Server & {
-  resolvers: Array<typeof MetaResolver | typeof AntennaResolver>;
+  resolvers: Array<
+    typeof MetaResolver | typeof AntennaResolver | typeof FlightsResolver
+  >;
   model: {};
   gateways: {
     antenna: RpcMethod;

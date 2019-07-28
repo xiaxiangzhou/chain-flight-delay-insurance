@@ -220,6 +220,10 @@ input ExecutionInput {
   data: Buffer!
 }
 
+type FlightDetailResponse {
+  orders: [Order!]
+}
+
 type GetAccountResponse {
   accountMeta: AccountMeta!
 }
@@ -327,6 +331,25 @@ input MerkleRootInput {
 
 type Mutation {
   addSubscription(email: String!): SendGridInfo!
+}
+
+type OngoingPayout {
+  buyerAddress: String!
+  contractAddress: String!
+  airlineCode: String!
+  flightNumber: Float!
+  scheduleTakeOff: Float!
+  pay: Float!
+}
+
+type OngoingPayoutResponse {
+  payouts: [OngoingPayout!]
+}
+
+type Order {
+  maxBenefit: Float!
+  creatorAddress: String!
+  contractAddress: String!
 }
 
 type PlumChallengeExit {
@@ -439,6 +462,24 @@ input PlumTransferInput {
   recipient: String!
 }
 
+type PolicyResponse {
+  unknown: Float!
+  ontime: Float!
+  cancel: Float!
+  divert: Float!
+  delay0h: Float!
+  delay1h: Float!
+  delay2h: Float!
+  delay3h: Float!
+  delay4h: Float!
+  delay5h: Float!
+  delay6h: Float!
+  delay7h: Float!
+  delay8h: Float!
+  delay9h: Float!
+  delay10hplus: Float!
+}
+
 type PutBlock {
   subChainAddress: String!
   height: Int!
@@ -527,6 +568,24 @@ type Query {
   # get epoch meta
   getEpochMeta(epochNumber: Int!): GetEpochMetaResponse!
   health: String!
+
+  # read flight detail
+  getFlightDetail(
+    airlineCode: String!
+    flightNumber: Float!
+    year: Float!
+    month: Float!
+    day: Float!
+  ): FlightDetailResponse!
+
+  # read policy
+  getPolicy: PolicyResponse!
+
+  # recommand some flights
+  getRecommandation: RecommandResponse!
+
+  # ongoing payouts
+  getOngoingPayouts: OngoingPayoutResponse!
   fetchCoinPrice: CoinPrice!
   fetchVersionInfo: VersionInfo!
 }
@@ -552,6 +611,17 @@ type Receipt {
 type ReceiptInfo {
   receipt: Receipt
   blkHash: String!
+}
+
+type Recommand {
+  airLineCode: String!
+  flightNumber: Float!
+  premium: Float!
+  maxBenefit: Float!
+}
+
+type RecommandResponse {
+  recommands: [Recommand!]
 }
 
 enum RewardType {
