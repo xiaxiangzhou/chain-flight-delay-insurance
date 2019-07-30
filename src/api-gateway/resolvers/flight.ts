@@ -19,15 +19,6 @@ registerEnumType(StatusCode, {
 });
 
 @ObjectType()
-export class Status {
-  @Field(_ => Number)
-  public code: number;
-
-  @Field(_ => String)
-  public message: string;
-}
-
-@ObjectType()
 export class Order {
   @Field(_ => Number)
   public maxBenefit: number;
@@ -40,16 +31,25 @@ export class Order {
 }
 
 @ObjectType()
-export class FlightDetailResponse {
+export class FlightDetail {
   @Field(_ => [Order], { nullable: true })
   public orders: Array<Order>;
-
-  @Field(_ => Status)
-  public status: Status;
 }
 
 @ObjectType()
-export class PolicyResponse {
+export class FlightDetailResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => FlightDetail)
+  public result: FlightDetail;
+}
+
+@ObjectType()
+export class Policy {
   @Field(_ => Number)
   public unknown: number;
 
@@ -94,9 +94,18 @@ export class PolicyResponse {
 
   @Field(_ => Number)
   public delay10hplus: number;
+}
 
-  @Field(_ => Status)
-  public status: Status;
+@ObjectType()
+export class PolicyResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => Policy)
+  public result: Policy;
 }
 
 @ObjectType()
@@ -115,12 +124,21 @@ export class Recommand {
 }
 
 @ObjectType()
-export class RecommandResponse {
+export class Recommands {
   @Field(_ => [Recommand], { nullable: true })
   public recommands: Array<Recommand>;
+}
 
-  @Field(_ => Status)
-  public status: Status;
+@ObjectType()
+export class RecommandResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => Recommands)
+  public result: Recommands;
 }
 
 @ObjectType()
@@ -145,12 +163,21 @@ export class OngoingPayout {
 }
 
 @ObjectType()
-export class OngoingPayoutResponse {
+export class OngoingPayouts {
   @Field(_ => [OngoingPayout], { nullable: true })
   public payouts: Array<OngoingPayout>;
+}
 
-  @Field(_ => Status)
-  public status: Status;
+@ObjectType()
+export class OngoingPayoutResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => OngoingPayouts)
+  public result: OngoingPayouts;
 }
 
 @ArgsType()
@@ -186,7 +213,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     //return gateways.antenna.readContract(input);
     //const a = input;
 
-    const response = new FlightDetailResponse();
+    const detail = new FlightDetail();
     const order1 = new Order();
     order1.contractAddress = "yyyyyyy1";
     order1.creatorAddress = "xxxxxxx1";
@@ -206,12 +233,12 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     order4.contractAddress = "yyyyyyy4";
     order4.creatorAddress = "xxxxxxx4";
     order4.maxBenefit = 300;
-    response.orders = [order1, order2, order3, order4];
+    detail.orders = [order1, order2, order3, order4];
 
-    let status = new Status();
-    status.code = StatusCode.Success.valueOf();
-    status.message = "";
-    response.status = status;
+    let response = new FlightDetailResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+    response.result = detail;
 
     return response;
   }
@@ -220,7 +247,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   public async getPolicy(): Promise<PolicyResponse> {
     //return gateways.antenna.readContract(input);
 
-    const policy = new PolicyResponse();
+    const policy = new Policy();
     policy.unknown = 0;
     policy.ontime = 0;
     policy.cancel = 50;
@@ -237,19 +264,19 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     policy.delay9h = 100;
     policy.delay10hplus = 100;
 
-    let status = new Status();
-    status.code = StatusCode.Success.valueOf();
-    status.message = "";
-    policy.status = status;
+    let response = new PolicyResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+    response.result = policy;
 
-    return policy;
+    return response;
   }
 
   @Query(_ => RecommandResponse, { description: "recommand some flights" })
   public async getRecommandation(): Promise<RecommandResponse> {
     //return gateways.antenna.readContract(input);
 
-    const recommand = new RecommandResponse();
+    const response = new RecommandResponse();
     const recommand1 = new Recommand();
     recommand1.airLineCode = "UA";
     recommand1.flightNumber = 912;
@@ -274,21 +301,21 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     recommand4.premium = 10;
     recommand4.maxBenefit = 200;
 
-    recommand.recommands = [recommand1, recommand2, recommand3, recommand4];
+    let recommands = new Recommands();
+    recommands.recommands = [recommand1, recommand2, recommand3, recommand4];
 
-    let status = new Status();
-    status.code = StatusCode.Success.valueOf();
-    status.message = "";
-    recommand.status = status;
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+    response.result = recommands;
 
-    return recommand;
+    return response;
   }
 
   @Query(_ => OngoingPayoutResponse, { description: "ongoing payouts" })
   public async getOngoingPayouts(): Promise<OngoingPayoutResponse> {
     //return gateways.antenna.readContract(input);
 
-    const payouts = new OngoingPayoutResponse();
+    let response = new OngoingPayoutResponse();
     const payout1 = new OngoingPayout();
     payout1.buyerAddress = "xxxxxxxxxxx1";
     payout1.contractAddress = "yyyyyyyyyyy1";
@@ -321,13 +348,13 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     payout4.scheduleTakeOff = 1564143593;
     payout4.pay = 198;
 
+    let payouts = new OngoingPayouts();
     payouts.payouts = [payout1, payout2, payout3, payout4];
 
-    let status = new Status();
-    status.code = StatusCode.Success.valueOf();
-    status.message = "";
-    payouts.status = status;
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+    response.result = payouts;
 
-    return payouts;
+    return response;
   }
 }

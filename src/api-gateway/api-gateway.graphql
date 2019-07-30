@@ -220,9 +220,14 @@ input ExecutionInput {
   data: Buffer!
 }
 
-type FlightDetailResponse {
+type FlightDetail {
   orders: [Order!]
-  status: Status!
+}
+
+type FlightDetailResponse {
+  code: Float!
+  message: String!
+  result: FlightDetail!
 }
 
 type GetAccountResponse {
@@ -344,8 +349,13 @@ type OngoingPayout {
 }
 
 type OngoingPayoutResponse {
+  code: Float!
+  message: String!
+  result: OngoingPayouts!
+}
+
+type OngoingPayouts {
   payouts: [OngoingPayout!]
-  status: Status!
 }
 
 type Order {
@@ -464,7 +474,7 @@ input PlumTransferInput {
   recipient: String!
 }
 
-type PolicyResponse {
+type Policy {
   unknown: Float!
   ontime: Float!
   cancel: Float!
@@ -480,7 +490,12 @@ type PolicyResponse {
   delay8h: Float!
   delay9h: Float!
   delay10hplus: Float!
-  status: Status!
+}
+
+type PolicyResponse {
+  code: Float!
+  message: String!
+  result: Policy!
 }
 
 type PutBlock {
@@ -624,8 +639,13 @@ type Recommand {
 }
 
 type RecommandResponse {
+  code: Float!
+  message: String!
+  result: Recommands!
+}
+
+type Recommands {
   recommands: [Recommand!]
-  status: Status!
 }
 
 enum RewardType {
