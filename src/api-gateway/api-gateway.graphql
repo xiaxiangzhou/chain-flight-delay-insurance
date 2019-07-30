@@ -222,6 +222,7 @@ input ExecutionInput {
 
 type FlightDetailResponse {
   orders: [Order!]
+  status: Status!
 }
 
 type GetAccountResponse {
@@ -344,6 +345,7 @@ type OngoingPayout {
 
 type OngoingPayoutResponse {
   payouts: [OngoingPayout!]
+  status: Status!
 }
 
 type Order {
@@ -478,6 +480,7 @@ type PolicyResponse {
   delay8h: Float!
   delay9h: Float!
   delay10hplus: Float!
+  status: Status!
 }
 
 type PutBlock {
@@ -622,6 +625,7 @@ type Recommand {
 
 type RecommandResponse {
   recommands: [Recommand!]
+  status: Status!
 }
 
 enum RewardType {
@@ -684,6 +688,11 @@ input StartSubChainInput {
   operationDeposit: Buffer!
   startHeight: Int!
   parentHeightOffset: Int!
+}
+
+type Status {
+  code: Float!
+  message: String!
 }
 
 type StopSubChain {

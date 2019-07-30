@@ -3,10 +3,29 @@ import {
   Args,
   ArgsType,
   Query,
+  registerEnumType,
   Resolver,
   ResolverInterface
 } from "type-graphql";
 import { Field, ObjectType } from "type-graphql";
+
+export enum StatusCode {
+  Success,
+  Unavailable
+}
+
+registerEnumType(StatusCode, {
+  name: "StatusCode"
+});
+
+@ObjectType()
+export class Status {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+}
 
 @ObjectType()
 export class Order {
@@ -24,6 +43,9 @@ export class Order {
 export class FlightDetailResponse {
   @Field(_ => [Order], { nullable: true })
   public orders: Array<Order>;
+
+  @Field(_ => Status)
+  public status: Status;
 }
 
 @ObjectType()
@@ -72,6 +94,9 @@ export class PolicyResponse {
 
   @Field(_ => Number)
   public delay10hplus: number;
+
+  @Field(_ => Status)
+  public status: Status;
 }
 
 @ObjectType()
@@ -93,6 +118,9 @@ export class Recommand {
 export class RecommandResponse {
   @Field(_ => [Recommand], { nullable: true })
   public recommands: Array<Recommand>;
+
+  @Field(_ => Status)
+  public status: Status;
 }
 
 @ObjectType()
@@ -120,6 +148,9 @@ export class OngoingPayout {
 export class OngoingPayoutResponse {
   @Field(_ => [OngoingPayout], { nullable: true })
   public payouts: Array<OngoingPayout>;
+
+  @Field(_ => Status)
+  public status: Status;
 }
 
 @ArgsType()
@@ -177,6 +208,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     order4.maxBenefit = 300;
     response.orders = [order1, order2, order3, order4];
 
+    let status = new Status();
+    status.code = StatusCode.Success.valueOf();
+    status.message = "";
+    response.status = status;
+
     return response;
   }
 
@@ -200,6 +236,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     policy.delay8h = 100;
     policy.delay9h = 100;
     policy.delay10hplus = 100;
+
+    let status = new Status();
+    status.code = StatusCode.Success.valueOf();
+    status.message = "";
+    policy.status = status;
 
     return policy;
   }
@@ -234,6 +275,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     recommand4.maxBenefit = 200;
 
     recommand.recommands = [recommand1, recommand2, recommand3, recommand4];
+
+    let status = new Status();
+    status.code = StatusCode.Success.valueOf();
+    status.message = "";
+    recommand.status = status;
 
     return recommand;
   }
@@ -276,6 +322,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     payout4.pay = 198;
 
     payouts.payouts = [payout1, payout2, payout3, payout4];
+
+    let status = new Status();
+    status.code = StatusCode.Success.valueOf();
+    status.message = "";
+    payouts.status = status;
 
     return payouts;
   }
