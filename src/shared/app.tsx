@@ -16,27 +16,6 @@ type Props = {
   locale: string;
 };
 
-/*export class App extends Component<Props> {
-  public render(): JSX.Element {
-    return (
-      <Switch>
-        <Route exact path="/" component={Home} />
-        <Route
-          exact
-          path="/address/:address"
-          component={AddressDetails}
-        />
-        <Route path="/block/:height" component={BlockDetail} />
-        <Route exact path="/block" component={Blocks} />
-        <Route exact path="/action/:hash" component={ActionDetail} />
-        <Route exact path="/action" component={Actions} />
-        <Route exact path="/flightdetail" component={FlightDetail} />
-        <Route path="/wallet" component={Wallet} />
-      </Switch>
-    );
-  }
-}*/
-
 export class App extends Component<Props> {
   public render(): JSX.Element {
     return (
