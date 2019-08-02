@@ -53,7 +53,10 @@ export class Order {
 @ObjectType()
 export class FlightDetail {
   @Field(_ => Number)
-  public flightOrderStatus: number;
+  public flightOrderStatusCode: number;
+
+  @Field(_ => String)
+  public flightOrderStatusMessage: string;
 
   @Field(_ => [Order], { nullable: true })
   public orders: Array<Order>;
@@ -257,7 +260,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     // un supported flight
     if (!SUPPORTED_AIRLINE_CODE.includes(input.airlineCode)) {
       const detail = new FlightDetail();
-      detail.flightOrderStatus = FlightOrderStatusCode.NotSupported.valueOf();
+      detail.flightOrderStatusCode = FlightOrderStatusCode.NotSupported.valueOf();
+      detail.flightOrderStatusMessage = "Do Not Support This Flight";
       detail.orders = [];
 
       const response = new FlightDetailResponse();
@@ -271,7 +275,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     // no order
     if (![912, 883].includes(input.flightNumber)) {
       const detail = new FlightDetail();
-      detail.flightOrderStatus = FlightOrderStatusCode.NoOrder.valueOf();
+      detail.flightOrderStatusCode = FlightOrderStatusCode.NoOrder.valueOf();
+      detail.flightOrderStatusMessage = "No Order In This Flight";
       detail.orders = [];
 
       const response = new FlightDetailResponse();
@@ -303,7 +308,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     order4.creatorAddress = "xxxxxxx4";
     order4.maxBenefit = 300;
     detail.orders = [order1, order2, order3, order4];
-    detail.flightOrderStatus = FlightOrderStatusCode.Normal.valueOf();
+    detail.flightOrderStatusCode = FlightOrderStatusCode.Normal.valueOf();
+    detail.flightOrderStatusMessage = "";
 
     const response = new FlightDetailResponse();
     response.code = StatusCode.Success.valueOf();
