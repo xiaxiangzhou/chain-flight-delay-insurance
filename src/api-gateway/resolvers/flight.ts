@@ -9,9 +9,29 @@ import {
 } from "type-graphql";
 import { Field, ObjectType } from "type-graphql";
 
+const SUPPORTED_AIRLINE_CODE = [
+  "AS",
+  "G4",
+  "AA",
+  "DL",
+  "F9",
+  "HA",
+  "B6",
+  "WN",
+  "NK",
+  "SY",
+  "UA"
+];
+
 export enum StatusCode {
   Success,
   Unavailable
+}
+
+export enum FlightOrderStatusCode {
+  Normal,
+  NotSupported,
+  NoOrder
 }
 
 registerEnumType(StatusCode, {
@@ -32,6 +52,9 @@ export class Order {
 
 @ObjectType()
 export class FlightDetail {
+  @Field(_ => Number)
+  public flightOrderStatus: number;
+
   @Field(_ => [Order], { nullable: true })
   public orders: Array<Order>;
 }
@@ -159,6 +182,9 @@ export class OngoingPayout {
   public scheduleTakeOff: number;
 
   @Field(_ => Number)
+  public payTime: number;
+
+  @Field(_ => Number)
   public pay: number;
 }
 
@@ -178,6 +204,24 @@ export class OngoingPayoutResponse {
 
   @Field(_ => OngoingPayouts)
   public result: OngoingPayouts;
+}
+
+@ObjectType()
+export class SupportedAirlineCodes {
+  @Field(_ => [String], { nullable: true })
+  public airlines: Array<string>;
+}
+
+@ObjectType()
+export class SupportedAirlineCodeResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => SupportedAirlineCodes)
+  public result: SupportedAirlineCodes;
 }
 
 @ArgsType()
@@ -208,10 +252,34 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   @Query(_ => FlightDetailResponse, { description: "read flight detail" })
   public async getFlightDetail(
     @Args(_ => FlightDetailRequest)
-    _: FlightDetailRequest
+    input: FlightDetailRequest
   ): Promise<FlightDetailResponse> {
-    //return gateways.antenna.readContract(input);
-    //const a = input;
+    // un supported flight
+    if (!SUPPORTED_AIRLINE_CODE.includes(input.airlineCode)) {
+      let detail = new FlightDetail();
+      detail.flightOrderStatus = FlightOrderStatusCode.NotSupported.valueOf();
+
+      let response = new FlightDetailResponse();
+      response.code = StatusCode.Success.valueOf();
+      response.message = "";
+      response.result = detail;
+
+      return response;
+    }
+
+    // no order
+    if (![912, 883].includes(input.flightNumber)) {
+      let detail = new FlightDetail();
+      detail.flightOrderStatus = FlightOrderStatusCode.NoOrder.valueOf();
+      detail.orders = [];
+
+      let response = new FlightDetailResponse();
+      response.code = StatusCode.Success.valueOf();
+      response.message = "";
+      response.result = detail;
+
+      return response;
+    }
 
     const detail = new FlightDetail();
     const order1 = new Order();
@@ -234,8 +302,9 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     order4.creatorAddress = "xxxxxxx4";
     order4.maxBenefit = 300;
     detail.orders = [order1, order2, order3, order4];
+    detail.flightOrderStatus = FlightOrderStatusCode.Normal.valueOf();
 
-    let response = new FlightDetailResponse();
+    const response = new FlightDetailResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
     response.result = detail;
@@ -264,7 +333,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     policy.delay9h = 100;
     policy.delay10hplus = 100;
 
-    let response = new PolicyResponse();
+    const response = new PolicyResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
     response.result = policy;
@@ -301,7 +370,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     recommand4.premium = 10;
     recommand4.maxBenefit = 200;
 
-    let recommands = new Recommands();
+    const recommands = new Recommands();
     recommands.recommands = [recommand1, recommand2, recommand3, recommand4];
 
     response.code = StatusCode.Success.valueOf();
@@ -315,13 +384,14 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   public async getOngoingPayouts(): Promise<OngoingPayoutResponse> {
     //return gateways.antenna.readContract(input);
 
-    let response = new OngoingPayoutResponse();
+    const response = new OngoingPayoutResponse();
     const payout1 = new OngoingPayout();
     payout1.buyerAddress = "xxxxxxxxxxx1";
     payout1.contractAddress = "yyyyyyyyyyy1";
     payout1.airlineCode = "UA";
     payout1.flightNumber = 312;
     payout1.scheduleTakeOff = 1564145593;
+    payout1.payTime = 1564385593;
     payout1.pay = 250;
 
     const payout2 = new OngoingPayout();
@@ -330,6 +400,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     payout2.airlineCode = "AA";
     payout2.flightNumber = 234;
     payout2.scheduleTakeOff = 1564135593;
+    payout2.payTime = 1564375593;
     payout2.pay = 200;
 
     const payout3 = new OngoingPayout();
@@ -338,6 +409,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     payout3.airlineCode = "DL";
     payout3.flightNumber = 1312;
     payout3.scheduleTakeOff = 1554145593;
+    payout3.payTime = 1554385593;
     payout3.pay = 400;
 
     const payout4 = new OngoingPayout();
@@ -346,14 +418,32 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     payout4.airlineCode = "AA";
     payout4.flightNumber = 789;
     payout4.scheduleTakeOff = 1564143593;
+    payout4.payTime = 1564383593;
     payout4.pay = 198;
 
-    let payouts = new OngoingPayouts();
+    const payouts = new OngoingPayouts();
     payouts.payouts = [payout1, payout2, payout3, payout4];
 
     response.code = StatusCode.Success.valueOf();
     response.message = "";
     response.result = payouts;
+
+    return response;
+  }
+
+  @Query(_ => SupportedAirlineCodeResponse, {
+    description: "read supported airline code"
+  })
+  public async getSupportedAirlineCode(): Promise<
+    SupportedAirlineCodeResponse
+  > {
+    let airlineCodes = new SupportedAirlineCodes();
+    airlineCodes.airlines = SUPPORTED_AIRLINE_CODE;
+
+    let response = new SupportedAirlineCodeResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+    response.result = airlineCodes;
 
     return response;
   }

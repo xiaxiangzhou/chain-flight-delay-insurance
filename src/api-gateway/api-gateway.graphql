@@ -221,6 +221,7 @@ input ExecutionInput {
 }
 
 type FlightDetail {
+  flightOrderStatus: Float!
   orders: [Order!]
 }
 
@@ -345,6 +346,7 @@ type OngoingPayout {
   airlineCode: String!
   flightNumber: Float!
   scheduleTakeOff: Float!
+  payTime: Float!
   pay: Float!
 }
 
@@ -604,6 +606,9 @@ type Query {
 
   # ongoing payouts
   getOngoingPayouts: OngoingPayoutResponse!
+
+  # read supported airline code
+  getSupportedAirlineCode: SupportedAirlineCodeResponse!
   fetchCoinPrice: CoinPrice!
   fetchVersionInfo: VersionInfo!
 }
@@ -710,11 +715,6 @@ input StartSubChainInput {
   parentHeightOffset: Int!
 }
 
-type Status {
-  code: Float!
-  message: String!
-}
-
 type StopSubChain {
   chainID: Int!
   stopHeight: Int!
@@ -729,6 +729,16 @@ input StopSubChainInput {
 
 type SuggestGasPriceResponse {
   gasPrice: Int!
+}
+
+type SupportedAirlineCodeResponse {
+  code: Float!
+  message: String!
+  result: SupportedAirlineCodes!
+}
+
+type SupportedAirlineCodes {
+  airlines: [String!]
 }
 
 type TerminatePlumChain {
