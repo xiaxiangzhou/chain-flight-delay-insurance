@@ -256,10 +256,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   ): Promise<FlightDetailResponse> {
     // un supported flight
     if (!SUPPORTED_AIRLINE_CODE.includes(input.airlineCode)) {
-      let detail = new FlightDetail();
+      const detail = new FlightDetail();
       detail.flightOrderStatus = FlightOrderStatusCode.NotSupported.valueOf();
+      detail.orders = [];
 
-      let response = new FlightDetailResponse();
+      const response = new FlightDetailResponse();
       response.code = StatusCode.Success.valueOf();
       response.message = "";
       response.result = detail;
@@ -269,11 +270,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
     // no order
     if (![912, 883].includes(input.flightNumber)) {
-      let detail = new FlightDetail();
+      const detail = new FlightDetail();
       detail.flightOrderStatus = FlightOrderStatusCode.NoOrder.valueOf();
       detail.orders = [];
 
-      let response = new FlightDetailResponse();
+      const response = new FlightDetailResponse();
       response.code = StatusCode.Success.valueOf();
       response.message = "";
       response.result = detail;
@@ -437,10 +438,10 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   public async getSupportedAirlineCode(): Promise<
     SupportedAirlineCodeResponse
   > {
-    let airlineCodes = new SupportedAirlineCodes();
+    const airlineCodes = new SupportedAirlineCodes();
     airlineCodes.airlines = SUPPORTED_AIRLINE_CODE;
 
-    let response = new SupportedAirlineCodeResponse();
+    const response = new SupportedAirlineCodeResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
     response.result = airlineCodes;
