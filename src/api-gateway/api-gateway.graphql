@@ -478,6 +478,8 @@ input PlumTransferInput {
 }
 
 type Policy {
+  premium: Float!
+  traditionalMaxBenefit: Float!
   unknown: Float!
   ontime: Float!
   cancel: Float!

@@ -77,6 +77,12 @@ export class FlightDetailResponse {
 @ObjectType()
 export class Policy {
   @Field(_ => Number)
+  public premium: number;
+
+  @Field(_ => Number)
+  public traditionalMaxBenefit: number;
+
+  @Field(_ => Number)
   public unknown: number;
 
   @Field(_ => Number)
@@ -324,6 +330,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     //return gateways.antenna.readContract(input);
 
     const policy = new Policy();
+    policy.premium = 5;
+    policy.traditionalMaxBenefit = 50;
     policy.unknown = 0;
     policy.ontime = 0;
     policy.cancel = 50;
