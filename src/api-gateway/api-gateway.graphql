@@ -88,6 +88,21 @@ input ActionInput {
   signature: Buffer!
 }
 
+type AvailableOrders {
+  date: String!
+  orderNumber: Float!
+}
+
+type AvailableOrdersList {
+  availableOrdersList: [AvailableOrders!]
+}
+
+type AvailableOrdersResponse {
+  code: Float!
+  message: String!
+  result: AvailableOrdersList!
+}
+
 # The BigNumber scalar type represents numeric values with precision as in https://github.com/MikeMcl/bignumber.js/
 scalar BigNumber
 
@@ -218,6 +233,13 @@ input ExecutionInput {
   amount: String!
   contract: String!
   data: Buffer!
+}
+
+type Flight {
+  airlineCode: String!
+  flightNumber: Float!
+  srcAirport: String!
+  dstAirport: String!
 }
 
 type FlightDetail {
@@ -601,6 +623,12 @@ type Query {
     day: Float!
   ): FlightDetailResponse!
 
+  # read available flight orders
+  getAvailableOrders(
+    airlineCode: String!
+    flightNumber: Float!
+  ): AvailableOrdersResponse!
+
   # read policy
   getPolicy: PolicyResponse!
 
@@ -610,8 +638,8 @@ type Query {
   # ongoing payouts
   getOngoingPayouts: OngoingPayoutResponse!
 
-  # read supported airline code
-  getSupportedAirlineCode: SupportedAirlineCodeResponse!
+  # read supported flights
+  getSupportedFlights: SupportedFlightsResponse!
   fetchCoinPrice: CoinPrice!
   fetchVersionInfo: VersionInfo!
 }
@@ -734,14 +762,14 @@ type SuggestGasPriceResponse {
   gasPrice: Int!
 }
 
-type SupportedAirlineCodeResponse {
-  code: Float!
-  message: String!
-  result: SupportedAirlineCodes!
+type SupportedFlights {
+  flights: [Flight!]
 }
 
-type SupportedAirlineCodes {
-  airlines: [String!]
+type SupportedFlightsResponse {
+  code: Float!
+  message: String!
+  result: SupportedFlights!
 }
 
 type TerminatePlumChain {

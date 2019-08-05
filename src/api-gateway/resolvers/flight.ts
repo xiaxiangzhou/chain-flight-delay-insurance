@@ -216,21 +216,63 @@ export class OngoingPayoutResponse {
 }
 
 @ObjectType()
-export class SupportedAirlineCodes {
-  @Field(_ => [String], { nullable: true })
-  public airlines: Array<string>;
+export class Flight {
+  @Field(_ => String)
+  public airlineCode: string;
+
+  @Field(_ => Number)
+  public flightNumber: number;
+
+  @Field(_ => String)
+  public srcAirport: string;
+
+  @Field(_ => String)
+  public dstAirport: string;
 }
 
 @ObjectType()
-export class SupportedAirlineCodeResponse {
+export class SupportedFlights {
+  @Field(_ => [Flight], { nullable: true })
+  public flights: Array<Flight>;
+}
+
+@ObjectType()
+export class SupportedFlightsResponse {
   @Field(_ => Number)
   public code: number;
 
   @Field(_ => String)
   public message: string;
 
-  @Field(_ => SupportedAirlineCodes)
-  public result: SupportedAirlineCodes;
+  @Field(_ => SupportedFlights)
+  public result: SupportedFlights;
+}
+
+@ObjectType()
+export class AvailableOrders {
+  @Field(_ => String)
+  public date: string;
+
+  @Field(_ => Number)
+  public orderNumber: number;
+}
+
+@ObjectType()
+export class AvailableOrdersList {
+  @Field(_ => [AvailableOrders], { nullable: true })
+  public availableOrdersList: Array<AvailableOrders>;
+}
+
+@ObjectType()
+export class AvailableOrdersResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => AvailableOrdersList)
+  public result: AvailableOrdersList;
 }
 
 @ArgsType()
@@ -249,6 +291,15 @@ export class FlightDetailRequest {
 
   @Field(_ => Number)
   public day: number;
+}
+
+@ArgsType()
+export class AvailableOrdersRequest {
+  @Field(_ => String)
+  public airlineCode: string;
+
+  @Field(_ => Number)
+  public flightNumber: number;
 }
 
 @Resolver(_ => String)
@@ -321,6 +372,46 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     response.code = StatusCode.Success.valueOf();
     response.message = "";
     response.result = detail;
+
+    return response;
+  }
+
+  @Query(_ => AvailableOrdersResponse, {
+    description: "read available flight orders"
+  })
+  public async getAvailableOrders(
+    @Args(_ => AvailableOrdersRequest)
+    _: AvailableOrdersRequest
+  ): Promise<AvailableOrdersResponse> {
+    // un supported flight
+    let availableOrdersList = new AvailableOrdersList();
+    const availableOrder1 = new AvailableOrders();
+    availableOrder1.date = "2019-08-22";
+    availableOrder1.orderNumber = 4;
+
+    const availableOrder2 = new AvailableOrders();
+    availableOrder2.date = "2019-08-23";
+    availableOrder2.orderNumber = 4;
+
+    const availableOrder3 = new AvailableOrders();
+    availableOrder3.date = "2019-08-24";
+    availableOrder3.orderNumber = 4;
+
+    const availableOrder4 = new AvailableOrders();
+    availableOrder4.date = "2019-08-25";
+    availableOrder4.orderNumber = 4;
+
+    availableOrdersList.availableOrdersList = [
+      availableOrder1,
+      availableOrder2,
+      availableOrder3,
+      availableOrder4
+    ];
+
+    const response = new AvailableOrdersResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+    response.result = availableOrdersList;
 
     return response;
   }
@@ -446,19 +537,41 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     return response;
   }
 
-  @Query(_ => SupportedAirlineCodeResponse, {
-    description: "read supported airline code"
+  @Query(_ => SupportedFlightsResponse, {
+    description: "read supported flights"
   })
-  public async getSupportedAirlineCode(): Promise<
-    SupportedAirlineCodeResponse
-  > {
-    const airlineCodes = new SupportedAirlineCodes();
-    airlineCodes.airlines = SUPPORTED_AIRLINE_CODE;
+  public async getSupportedFlights(): Promise<SupportedFlightsResponse> {
+    let supportedFlights = new SupportedFlights();
 
-    const response = new SupportedAirlineCodeResponse();
+    let flight1 = new Flight();
+    flight1.airlineCode = "AS";
+    flight1.flightNumber = 340;
+    flight1.srcAirport = "SFO";
+    flight1.dstAirport = "EWR";
+
+    let flight2 = new Flight();
+    flight2.airlineCode = "B6";
+    flight2.flightNumber = 616;
+    flight2.srcAirport = "SFO";
+    flight2.dstAirport = "JFK";
+
+    let flight3 = new Flight();
+    flight3.airlineCode = "DL";
+    flight3.flightNumber = 430;
+    flight3.srcAirport = "SFO";
+    flight3.dstAirport = "JFK";
+
+    let flight4 = new Flight();
+    flight4.airlineCode = "UA";
+    flight4.flightNumber = 1796;
+    flight4.srcAirport = "SFO";
+    flight4.dstAirport = "EWR";
+    supportedFlights.flights = [flight1, flight2, flight3, flight4];
+
+    let response = new SupportedFlightsResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
-    response.result = airlineCodes;
+    response.result = supportedFlights;
 
     return response;
   }
