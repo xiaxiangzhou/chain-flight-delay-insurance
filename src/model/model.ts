@@ -7,6 +7,7 @@ export type Model = {
 };
 
 export function setModel(server: MyServer): void {
+  // @ts-ignore
   server.model = ((server.model || {}) as any) as Model;
   server.model.flight = new FlightModel(server.gateways);
 }
