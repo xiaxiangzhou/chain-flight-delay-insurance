@@ -7,7 +7,7 @@ export type Model = {
 };
 
 export function setModel(server: MyServer): void {
-  /* tslint:disable-next-line */
+  // tslint:disable-next-line
   server.model = ((server.model || {}) as any) as Model;
   server.model.flight = new FlightModel(server.gateways);
 }
