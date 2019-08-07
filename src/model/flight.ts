@@ -65,19 +65,4 @@ export class FlightModel {
   public getAllFlights(): DocumentQuery<Array<IFlightDoc>, IFlightDoc> {
     return this.Model.find();
   }
-
-  public delete(
-    airlineCode: string,
-    flightNumber: number,
-    srcAirport: string,
-    dstAirport: string
-    // @ts-ignore
-  ): any {
-    return this.Model.deleteOne({
-      airlineCode,
-      flightNumber,
-      srcAirport,
-      dstAirport
-    });
-  }
 }
