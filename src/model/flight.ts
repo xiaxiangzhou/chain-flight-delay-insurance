@@ -1,3 +1,4 @@
+// @ts-ignore
 import mongoose, { DocumentQuery } from "mongoose";
 
 const Schema = mongoose.Schema;

@@ -1,6 +1,7 @@
 import { AxiosResponse } from "axios";
 import config from "config";
 import RpcMethod from "iotex-antenna/lib/rpc-method/node-rpc-method";
+// @ts-ignore
 import mongoose from "mongoose";
 // @ts-ignore
 import { Config, Server } from "onefx/lib/server";

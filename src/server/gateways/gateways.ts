@@ -1,4 +1,5 @@
 import RpcMethod from "iotex-antenna/lib/rpc-method/node-rpc-method";
+// @ts-ignore
 import mongoose from "mongoose";
 // @ts-ignore
 import { MyServer } from "../start-server";
