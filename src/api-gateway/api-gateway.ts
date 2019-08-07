@@ -28,7 +28,8 @@ export async function setApiGateway(server: MyServer): Promise<void> {
     playground: true,
     context: async _ => {
       return {
-        gateways: server.gateways
+        gateways: server.gateways,
+        model: server.model
       };
     }
   });

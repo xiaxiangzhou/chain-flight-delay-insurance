@@ -2,12 +2,18 @@
 import {
   Args,
   ArgsType,
+  Ctx,
   Query,
   registerEnumType,
   Resolver,
   ResolverInterface
 } from "type-graphql";
 import { Field, ObjectType } from "type-graphql";
+import { Model } from "../../model";
+
+export interface IContext {
+  model: Model;
+}
 
 const SUPPORTED_AIRLINE_CODE = [
   "AS",
@@ -384,7 +390,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     _: AvailableOrdersRequest
   ): Promise<AvailableOrdersResponse> {
     // un supported flight
-    let availableOrdersList = new AvailableOrdersList();
+    const availableOrdersList = new AvailableOrdersList();
     const availableOrder1 = new AvailableOrders();
     availableOrder1.date = "2019-08-22";
     availableOrder1.orderNumber = 4;
@@ -540,37 +546,24 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   @Query(_ => SupportedFlightsResponse, {
     description: "read supported flights"
   })
-  public async getSupportedFlights(): Promise<SupportedFlightsResponse> {
-    let supportedFlights = new SupportedFlights();
-
-    let flight1 = new Flight();
-    flight1.airlineCode = "AS";
-    flight1.flightNumber = 340;
-    flight1.srcAirport = "SFO";
-    flight1.dstAirport = "EWR";
-
-    let flight2 = new Flight();
-    flight2.airlineCode = "B6";
-    flight2.flightNumber = 616;
-    flight2.srcAirport = "SFO";
-    flight2.dstAirport = "JFK";
-
-    let flight3 = new Flight();
-    flight3.airlineCode = "DL";
-    flight3.flightNumber = 430;
-    flight3.srcAirport = "SFO";
-    flight3.dstAirport = "JFK";
-
-    let flight4 = new Flight();
-    flight4.airlineCode = "UA";
-    flight4.flightNumber = 1796;
-    flight4.srcAirport = "SFO";
-    flight4.dstAirport = "EWR";
-    supportedFlights.flights = [flight1, flight2, flight3, flight4];
-
-    let response = new SupportedFlightsResponse();
+  public async getSupportedFlights(@Ctx() { model }: IContext): Promise<
+    SupportedFlightsResponse
+  > {
+    const response = new SupportedFlightsResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
+
+    const rows = await model.flight.getAllFlights();
+    const supportedFlights = new SupportedFlights();
+    supportedFlights.flights = [];
+    for (const row of rows) {
+      const flight = new Flight();
+      flight.airlineCode = row.airlineCode;
+      flight.flightNumber = row.flightNumber;
+      flight.srcAirport = row.srcAirport;
+      flight.dstAirport = row.dstAirport;
+      supportedFlights.flights.push(flight);
+    }
     response.result = supportedFlights;
 
     return response;

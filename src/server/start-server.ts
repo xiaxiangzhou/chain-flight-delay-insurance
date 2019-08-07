@@ -1,12 +1,14 @@
 import { AxiosResponse } from "axios";
 import config from "config";
 import RpcMethod from "iotex-antenna/lib/rpc-method/node-rpc-method";
+import mongoose from "mongoose";
 // @ts-ignore
 import { Config, Server } from "onefx/lib/server";
+import "reflect-metadata";
 import { AntennaResolver } from "../api-gateway/resolvers/antenna";
 import { FlightsResolver } from "../api-gateway/resolvers/flight";
 import { MetaResolver } from "../api-gateway/resolvers/meta";
-import { setModel } from "../model";
+import { Model, setModel } from "../model";
 import "../shared/common/setup-big-number";
 import { setGateways } from "./gateways/gateways";
 import { setMiddleware } from "./middleware";
@@ -16,8 +18,9 @@ export type MyServer = Server & {
   resolvers: Array<
     typeof MetaResolver | typeof AntennaResolver | typeof FlightsResolver
   >;
-  model: {};
+  model: Model;
   gateways: {
+    mongoose: mongoose.Mongoose;
     antenna: RpcMethod;
     coinmarketcap: { fetchCoinPrice(): Promise<AxiosResponse> };
     sendgrid: {};
@@ -29,6 +32,9 @@ export type MyConfig = Config & {
   gateways: {
     iotexAntenna: string;
     sendgrid: {};
+    mongoose: {
+      uri: string;
+    };
   };
   bidContractAddress: string;
   vitaTokens: object;

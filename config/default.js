@@ -38,6 +38,10 @@ module.exports = {
       enabled: true,
       level: "debug"
     },
+    mongodbUri: process.env.MONGODB_URI,
+    mongoose: {
+      uri: process.env.MONGODB_URI
+    },
     iotexAntenna: process.env.IOTEX_CORE || "35.239.122.109:80",
     sendgridApiKey:
       process.env.SENDGRID_API_KEY ||
