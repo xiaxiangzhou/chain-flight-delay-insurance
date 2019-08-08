@@ -9,13 +9,14 @@ import {
   ResolverInterface
 } from "type-graphql";
 import { Field, ObjectType } from "type-graphql";
+import util from "util";
 import { Model } from "../../model";
 
 export interface IContext {
   model: Model;
 }
 
-const SUPPORTED_AIRLINE_CODE = [
+/*const SUPPORTED_AIRLINE_CODE = [
   "AS",
   "G4",
   "AA",
@@ -27,7 +28,9 @@ const SUPPORTED_AIRLINE_CODE = [
   "NK",
   "SY",
   "UA"
-];
+];*/
+
+const WEI_TO_ETHER = 1000000000000000000;
 
 export enum StatusCode {
   Success,
@@ -37,7 +40,8 @@ export enum StatusCode {
 export enum FlightOrderStatusCode {
   Normal,
   NotSupported,
-  NoOrder
+  NoOrder,
+  DateError
 }
 
 registerEnumType(StatusCode, {
@@ -318,13 +322,36 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   @Query(_ => FlightDetailResponse, { description: "read flight detail" })
   public async getFlightDetail(
     @Args(_ => FlightDetailRequest)
-    input: FlightDetailRequest
+    input: FlightDetailRequest,
+    @Ctx() { model }: IContext
   ): Promise<FlightDetailResponse> {
-    // un supported flight
-    if (!SUPPORTED_AIRLINE_CODE.includes(input.airlineCode)) {
+    /*await model.order.upsertOrder(
+      "AS",
+      266,
+      "2019-08-10",
+      "",
+      1565457330,
+      "io1jhzav2m2zsz5kyehvmcuskus3unepputa223sy",
+      "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
+      "",
+      "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
+      "io19r8cj7pmpr8jdt85p5nh7jw5sw8yk5dd86k43t",
+      0,
+      10000000000000000000,
+      5000000000000000000,
+      new Object("5d4a1e92325c64d24c1fae49"),
+      new Object("5d4a1e92325c64d24c1fae49"),
+    );*/
+
+    if (
+      input.month < 0 ||
+      input.month > 12 ||
+      input.day < 0 ||
+      input.day > 31
+    ) {
       const detail = new FlightDetail();
-      detail.flightOrderStatusCode = FlightOrderStatusCode.NotSupported.valueOf();
-      detail.flightOrderStatusMessage = "Do Not Support This Flight";
+      detail.flightOrderStatusCode = FlightOrderStatusCode.DateError.valueOf();
+      detail.flightOrderStatusMessage = "Month or Day is not correct";
       detail.orders = [];
 
       const response = new FlightDetailResponse();
@@ -335,8 +362,27 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       return response;
     }
 
+    let month = "";
+    if (input.month < 10) {
+      month = util.format("0%d", input.month);
+    } else {
+      month = util.format("%d", input.month);
+    }
+    let day = "";
+    if (input.day < 10) {
+      day = util.format("0%d", input.day);
+    } else {
+      day = util.format("%d", input.day);
+    }
+    const date = util.format("%d-%s-%s", input.year, month, day);
+    const rows = await model.order.getAvailableOrdersByFlightAndDate(
+      input.airlineCode,
+      input.flightNumber,
+      date
+    );
+
     // no order
-    if (![912, 883].includes(input.flightNumber)) {
+    if (rows.length === 0) {
       const detail = new FlightDetail();
       detail.flightOrderStatusCode = FlightOrderStatusCode.NoOrder.valueOf();
       detail.flightOrderStatusMessage = "No Order In This Flight";
@@ -351,26 +397,15 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     }
 
     const detail = new FlightDetail();
-    const order1 = new Order();
-    order1.contractAddress = "yyyyyyy1";
-    order1.creatorAddress = "xxxxxxx1";
-    order1.maxBenefit = 250;
+    detail.orders = [];
+    for (const row of rows) {
+      const order = new Order();
+      order.contractAddress = row.contractAddress;
+      order.creatorAddress = row.creatorAddress;
+      order.maxBenefit = row.maxBenefit / WEI_TO_ETHER;
+      detail.orders.push(order);
+    }
 
-    const order2 = new Order();
-    order2.contractAddress = "yyyyyyy2";
-    order2.creatorAddress = "xxxxxxx2";
-    order2.maxBenefit = 200;
-
-    const order3 = new Order();
-    order3.contractAddress = "yyyyyyy3";
-    order3.creatorAddress = "xxxxxxx3";
-    order3.maxBenefit = 150;
-
-    const order4 = new Order();
-    order4.contractAddress = "yyyyyyy4";
-    order4.creatorAddress = "xxxxxxx4";
-    order4.maxBenefit = 300;
-    detail.orders = [order1, order2, order3, order4];
     detail.flightOrderStatusCode = FlightOrderStatusCode.Normal.valueOf();
     detail.flightOrderStatusMessage = "";
 
@@ -387,32 +422,24 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   })
   public async getAvailableOrders(
     @Args(_ => AvailableOrdersRequest)
-    _: AvailableOrdersRequest
+    input: AvailableOrdersRequest,
+    @Ctx() { model }: IContext
   ): Promise<AvailableOrdersResponse> {
-    // un supported flight
+    const cursor = await model.order.getAvailableOrdersByFlight(
+      input.airlineCode,
+      input.flightNumber
+    );
+
     const availableOrdersList = new AvailableOrdersList();
-    const availableOrder1 = new AvailableOrders();
-    availableOrder1.date = "2019-08-22";
-    availableOrder1.orderNumber = 4;
-
-    const availableOrder2 = new AvailableOrders();
-    availableOrder2.date = "2019-08-23";
-    availableOrder2.orderNumber = 4;
-
-    const availableOrder3 = new AvailableOrders();
-    availableOrder3.date = "2019-08-24";
-    availableOrder3.orderNumber = 4;
-
-    const availableOrder4 = new AvailableOrders();
-    availableOrder4.date = "2019-08-25";
-    availableOrder4.orderNumber = 4;
-
-    availableOrdersList.availableOrdersList = [
-      availableOrder1,
-      availableOrder2,
-      availableOrder3,
-      availableOrder4
-    ];
+    availableOrdersList.availableOrdersList = [];
+    // @ts-ignore
+    // tslint:disable-next-line
+    await cursor.forEach(function(doc) {
+      const availableOrder = new AvailableOrders();
+      availableOrder.date = doc._id;
+      availableOrder.orderNumber = doc.count;
+      availableOrdersList.availableOrdersList.push(availableOrder);
+    });
 
     const response = new AvailableOrdersResponse();
     response.code = StatusCode.Success.valueOf();
@@ -454,36 +481,24 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   }
 
   @Query(_ => RecommandResponse, { description: "recommand some flights" })
-  public async getRecommandation(): Promise<RecommandResponse> {
-    //return gateways.antenna.readContract(input);
+  public async getRecommandation(@Ctx() { model }: IContext): Promise<
+    RecommandResponse
+  > {
+    //await model.recommandation.upsertRecommandation("AS", 345, 5000000000000000000, 10000000000000000000);
+
+    const rows = await model.recommandation.getRecommandations();
 
     const response = new RecommandResponse();
-    const recommand1 = new Recommand();
-    recommand1.airLineCode = "UA";
-    recommand1.flightNumber = 912;
-    recommand1.premium = 10;
-    recommand1.maxBenefit = 250;
-
-    const recommand2 = new Recommand();
-    recommand2.airLineCode = "UA";
-    recommand2.flightNumber = 1231;
-    recommand2.premium = 10;
-    recommand2.maxBenefit = 200;
-
-    const recommand3 = new Recommand();
-    recommand3.airLineCode = "AA";
-    recommand3.flightNumber = 5983;
-    recommand3.premium = 10;
-    recommand3.maxBenefit = 300;
-
-    const recommand4 = new Recommand();
-    recommand4.airLineCode = "DL";
-    recommand4.flightNumber = 773;
-    recommand4.premium = 10;
-    recommand4.maxBenefit = 200;
-
     const recommands = new Recommands();
-    recommands.recommands = [recommand1, recommand2, recommand3, recommand4];
+    recommands.recommands = [];
+    for (const row of rows) {
+      const recommand = new Recommand();
+      recommand.airLineCode = row.airlineCode;
+      recommand.flightNumber = row.flightNumber;
+      recommand.premium = row.premium / WEI_TO_ETHER;
+      recommand.maxBenefit = row.maxBenefit / WEI_TO_ETHER;
+      recommands.recommands.push(recommand);
+    }
 
     response.code = StatusCode.Success.valueOf();
     response.message = "";

@@ -33,7 +33,7 @@ export class FlightModel {
       updateAt: { type: Date, default: Date.now }
     });
 
-    FlightSchema.index({ userId: 1 });
+    //FlightSchema.index({ userId: 1 });
 
     FlightSchema.pre("save", function onSave(next: Function): void {
       // @ts-ignore
