@@ -166,6 +166,17 @@ type ChainMeta {
   epoch: Epoch!
 }
 
+type ChangePasswordResponse {
+  code: Float!
+  message: String!
+  result: ChangePasswordStatus!
+}
+
+type ChangePasswordStatus {
+  code: Float!
+  message: String!
+}
+
 type ClaimFromRewardingFund {
   amount: String!
   data: Buffer!
@@ -642,6 +653,29 @@ type Query {
   getSupportedFlights: SupportedFlightsResponse!
   fetchCoinPrice: CoinPrice!
   fetchVersionInfo: VersionInfo!
+
+  # register user
+  registerUser(email: String!, password: String!): UserRegisterResponse!
+
+  # login user
+  loginUser(email: String!, password: String!): UserLoginResponse!
+
+  # change password
+  changePassword(
+    email: String!
+    password: String!
+    newPassword: String!
+  ): ChangePasswordResponse!
+
+  # reset password init
+  resetPasswordInit(email: String!): ResetPasswordInitResponse!
+
+  # reset password finish
+  resetPasswordFinish(
+    email: String!
+    token: String!
+    password: String!
+  ): ResetPasswordFinishResponse!
 }
 
 type ReadContractResponse {
@@ -682,6 +716,28 @@ type RecommandResponse {
 
 type Recommands {
   recommands: [Recommand!]
+}
+
+type ResetPasswordFinishResponse {
+  code: Float!
+  message: String!
+  result: ResetPasswordFinishStatus!
+}
+
+type ResetPasswordFinishStatus {
+  code: Float!
+  message: String!
+}
+
+type ResetPasswordInitResponse {
+  code: Float!
+  message: String!
+  result: ResetPasswordInitStatus!
+}
+
+type ResetPasswordInitStatus {
+  code: Float!
+  message: String!
 }
 
 enum RewardType {
@@ -800,6 +856,28 @@ input TransferInput {
   amount: String!
   recipient: String!
   payload: Buffer!
+}
+
+type UserLoginResponse {
+  code: Float!
+  message: String!
+  result: UserLoginStatus!
+}
+
+type UserLoginStatus {
+  code: Float!
+  message: String!
+}
+
+type UserRegisterResponse {
+  code: Float!
+  message: String!
+  result: UserRegisterStatus!
+}
+
+type UserRegisterStatus {
+  code: Float!
+  message: String!
 }
 
 type VersionInfo {

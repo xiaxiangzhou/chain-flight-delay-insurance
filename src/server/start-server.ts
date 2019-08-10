@@ -9,6 +9,7 @@ import "reflect-metadata";
 import { AntennaResolver } from "../api-gateway/resolvers/antenna";
 import { FlightsResolver } from "../api-gateway/resolvers/flight";
 import { MetaResolver } from "../api-gateway/resolvers/meta";
+import { UserResolver } from "../api-gateway/resolvers/user";
 import { Model, setModel } from "../model";
 import "../shared/common/setup-big-number";
 import { setGateways } from "./gateways/gateways";
@@ -17,7 +18,10 @@ import { setServerRoutes } from "./server-routes";
 
 export type MyServer = Server & {
   resolvers: Array<
-    typeof MetaResolver | typeof AntennaResolver | typeof FlightsResolver
+    | typeof MetaResolver
+    | typeof AntennaResolver
+    | typeof FlightsResolver
+    | typeof UserResolver
   >;
   model: Model;
   gateways: {
