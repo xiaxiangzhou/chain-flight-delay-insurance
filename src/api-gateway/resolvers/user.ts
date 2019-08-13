@@ -18,6 +18,7 @@ import { SECRET_KEY, StatusCode } from "./flight";
 
 export interface IContext {
   model: Model;
+  headers: { [id: string]: string };
 }
 
 export enum UserRegisterCode {
@@ -100,6 +101,7 @@ export enum ChangePasswordCode {
   Success,
   InvalidOldPassword,
   UserNotFound,
+  UserNotMatch,
   InternalServerError
 }
 
@@ -270,6 +272,7 @@ export class UserResolver implements ResolverInterface<() => String> {
     try {
       const res = await model.user.findUser(input.email);
       const userLoginStatus = new UserLoginStatus();
+      userLoginStatus.token = "";
 
       if (res.length === 0) {
         userLoginStatus.code = UserLoginCode.UserNotFound.valueOf();
@@ -294,6 +297,7 @@ export class UserResolver implements ResolverInterface<() => String> {
       return response;
     } catch (e) {
       const userLoginStatus = new UserLoginStatus();
+      userLoginStatus.token = "";
       userLoginStatus.code = UserLoginCode.InternalServerError.valueOf();
       userLoginStatus.message = "Internal Server Error !";
       response.result = userLoginStatus;
@@ -308,8 +312,41 @@ export class UserResolver implements ResolverInterface<() => String> {
   public async changePassword(
     @Args(_ => ChangePasswordRequest)
     input: ChangePasswordRequest,
-    @Ctx() { model }: IContext
+    @Ctx() { model, headers }: IContext
   ): Promise<ChangePasswordResponse> {
+    try {
+      let jwtVerified = await jwt.verify(headers["x-access-token"], SECRET_KEY);
+
+      if (jwtVerified.email !== input.email) {
+        const changePasswordStatus = new ChangePasswordStatus();
+        changePasswordStatus.code = ChangePasswordCode.UserNotMatch.valueOf();
+        changePasswordStatus.message = " Can Not Change Other's Password !";
+        const response = new ChangePasswordResponse();
+        response.code = StatusCode.Success.valueOf();
+        response.message = "";
+        response.result = changePasswordStatus;
+
+        return response;
+      }
+    } catch (e) {
+      const changePasswordStatus = new ChangePasswordStatus();
+      changePasswordStatus.code = ChangePasswordCode.InternalServerError.valueOf();
+      changePasswordStatus.message = "";
+      const response = new ChangePasswordResponse();
+      response.result = changePasswordStatus;
+
+      if (e.name === "TokenExpiredError") {
+        response.code = StatusCode.TokenExpired.valueOf();
+        response.message = "token expired";
+      } else {
+        // return server internal error
+        response.code = StatusCode.InternalServerError.valueOf();
+        response.message = e.message;
+      }
+
+      return response;
+    }
+
     const response = new ChangePasswordResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
