@@ -32,10 +32,11 @@ export async function setApiGateway(server: MyServer): Promise<void> {
     schema,
     introspection: true,
     playground: true,
-    context: async _ => {
+    context: async ({ ctx }) => {
       return {
         gateways: server.gateways,
-        model: server.model
+        model: server.model,
+        headers: ctx.req.headers
       };
     }
   });

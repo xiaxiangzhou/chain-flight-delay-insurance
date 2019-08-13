@@ -1,5 +1,7 @@
 // tslint:disable:no-any
 import * as bcrypt from "bcryptjs";
+// @ts-ignore
+import * as jwt from "jsonwebtoken";
 import * as nodemailer from "nodemailer";
 import * as randomstring from "randomstring";
 import {
@@ -12,7 +14,7 @@ import {
 } from "type-graphql";
 import { Field, ObjectType } from "type-graphql";
 import { Model } from "../../model";
-import { StatusCode } from "./flight";
+import { SECRET_KEY, StatusCode } from "./flight";
 
 export interface IContext {
   model: Model;
@@ -51,7 +53,7 @@ export class UserRegisterRequest {
   public email: string;
 
   @Field(_ => String)
-  public password: string;
+  public hashedPassword: string;
 }
 
 export enum UserLoginCode {
@@ -68,6 +70,9 @@ export class UserLoginStatus {
 
   @Field(_ => String)
   public message: string;
+
+  @Field(_ => String)
+  public token: string;
 }
 
 @ObjectType()
@@ -88,7 +93,7 @@ export class UserLoginRequest {
   public email: string;
 
   @Field(_ => String)
-  public password: string;
+  public hashedPassword: string;
 }
 
 export enum ChangePasswordCode {
@@ -125,10 +130,10 @@ export class ChangePasswordRequest {
   public email: string;
 
   @Field(_ => String)
-  public password: string;
+  public hashedOldPassword: string;
 
   @Field(_ => String)
-  public newPassword: string;
+  public hashedNewPassword: string;
 }
 
 export enum ResetPasswordInitCode {
@@ -204,7 +209,7 @@ export class ResetPasswordFinishRequest {
   public token: string;
 
   @Field(_ => String)
-  public password: string;
+  public hashedNewPassword: string;
 }
 
 @Resolver(_ => String)
@@ -227,9 +232,7 @@ export class UserResolver implements ResolverInterface<() => String> {
     response.message = "";
 
     try {
-      const salt = bcrypt.genSaltSync(10);
-      const hash = bcrypt.hashSync(input.password, salt);
-      await model.user.registerUser(input.email, hash);
+      await model.user.registerUser(input.email, input.hashedPassword);
 
       const userRegisterStatus = new UserRegisterStatus();
       userRegisterStatus.code = UserRegisterCode.Success.valueOf();
@@ -273,9 +276,14 @@ export class UserResolver implements ResolverInterface<() => String> {
         userLoginStatus.message = "User Not Found !";
       } else {
         const user = res[0];
-        if (bcrypt.compareSync(input.password, user.hashedPassword)) {
+        if (input.hashedPassword === user.hashedPassword) {
+          const token = jwt.sign({ email: user.email }, SECRET_KEY, {
+            expiresIn: "365d"
+          });
+
           userLoginStatus.code = UserLoginCode.Success.valueOf();
           userLoginStatus.message = input.email;
+          userLoginStatus.token = token;
         } else {
           userLoginStatus.code = UserLoginCode.InvalidCredential.valueOf();
           userLoginStatus.message = "Invalid Credentials !";
@@ -315,12 +323,10 @@ export class UserResolver implements ResolverInterface<() => String> {
         changePasswordStatus.message = "User Not Found !";
       } else {
         const user = res[0];
-        const oldHashedPassword = user.hashedPassword;
+        const hashedOldPassword = user.hashedPassword;
 
-        if (bcrypt.compareSync(input.password, oldHashedPassword)) {
-          const salt = bcrypt.genSaltSync(10);
-          const hash = bcrypt.hashSync(input.newPassword, salt);
-          await model.user.changePassword(input.email, hash);
+        if (input.hashedOldPassword === hashedOldPassword) {
+          await model.user.changePassword(input.email, input.hashedNewPassword);
 
           changePasswordStatus.code = ChangePasswordCode.Success.valueOf();
           changePasswordStatus.message = "Password Updated Sucessfully !";
@@ -459,10 +465,10 @@ export class UserResolver implements ResolverInterface<() => String> {
         resetPasswordFinishStatus.message = "Password Changed Successfully !";
 
         if (bcrypt.compareSync(input.token, user.tempPassword)) {
-          const salt = bcrypt.genSaltSync(10);
-          const hash = bcrypt.hashSync(input.password, salt);
-
-          await model.user.clearTempPassword(input.email, hash);
+          await model.user.clearTempPassword(
+            input.email,
+            input.hashedNewPassword
+          );
 
           resetPasswordFinishStatus.code = ResetPasswordFinishCode.Success.valueOf();
           resetPasswordFinishStatus.message = "Password Changed Successfully !";

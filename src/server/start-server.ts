@@ -30,6 +30,7 @@ export type MyServer = Server & {
     coinmarketcap: { fetchCoinPrice(): Promise<AxiosResponse> };
     sendgrid: {};
   };
+  headers: { [id: string]: string };
   config: MyConfig;
 };
 

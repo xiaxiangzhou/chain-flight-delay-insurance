@@ -10,10 +10,12 @@ import {
 } from "type-graphql";
 import { Field, ObjectType } from "type-graphql";
 import util from "util";
+//import * as jwt from "jsonwebtoken";
 import { Model } from "../../model";
 
 export interface IContext {
   model: Model;
+  headers: { [id: string]: string };
 }
 
 /*const SUPPORTED_AIRLINE_CODE = [
@@ -31,10 +33,14 @@ export interface IContext {
 ];*/
 
 const WEI_TO_ETHER = 1000000000000000000;
+export const SECRET_KEY =
+  "88E33784A3CBA2D17820C6F3991839FA7ECD90BFFDE675E09C83E86344780A4E";
 
 export enum StatusCode {
   Success,
-  Unavailable
+  Unavailable,
+  TokenExpired,
+  InternalServerError
 }
 
 export enum FlightOrderStatusCode {
@@ -450,8 +456,46 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   }
 
   @Query(_ => PolicyResponse, { description: "read policy" })
-  public async getPolicy(): Promise<PolicyResponse> {
+  public async getPolicy(): //@Ctx() { headers }: IContext
+  Promise<PolicyResponse> {
     //return gateways.antenna.readContract(input);
+
+    /*try {
+      await jwt.verify(headers['x-access-token'], SECRET_KEY);
+    } catch (e) {
+      const response = new PolicyResponse();
+      const policy = new Policy();
+      policy.premium = 0;
+      policy.traditionalMaxBenefit = 0;
+      policy.unknown = 0;
+      policy.ontime = 0;
+      policy.cancel = 0;
+      policy.divert = 0;
+      policy.delay0h = 0;
+      policy.delay1h = 0;
+      policy.delay2h = 0;
+      policy.delay3h = 0;
+      policy.delay4h = 0;
+      policy.delay5h = 0;
+      policy.delay6h = 0;
+      policy.delay7h = 0;
+      policy.delay8h = 0;
+      policy.delay9h = 0;
+      policy.delay10hplus = 0;
+      response.result = policy;
+
+      if (e.name === "TokenExpiredError") {
+        response.code = StatusCode.TokenExpired.valueOf();
+        response.message = "token expired";
+      }
+      else {
+        // return server internal error
+        response.code = StatusCode.InternalServerError.valueOf();
+        response.message = e.message;
+      }
+
+      return response;
+    }*/
 
     const policy = new Policy();
     policy.premium = 5;

@@ -655,16 +655,16 @@ type Query {
   fetchVersionInfo: VersionInfo!
 
   # register user
-  registerUser(email: String!, password: String!): UserRegisterResponse!
+  registerUser(email: String!, hashedPassword: String!): UserRegisterResponse!
 
   # login user
-  loginUser(email: String!, password: String!): UserLoginResponse!
+  loginUser(email: String!, hashedPassword: String!): UserLoginResponse!
 
   # change password
   changePassword(
     email: String!
-    password: String!
-    newPassword: String!
+    hashedOldPassword: String!
+    hashedNewPassword: String!
   ): ChangePasswordResponse!
 
   # reset password init
@@ -674,7 +674,7 @@ type Query {
   resetPasswordFinish(
     email: String!
     token: String!
-    password: String!
+    hashedNewPassword: String!
   ): ResetPasswordFinishResponse!
 }
 
@@ -867,6 +867,7 @@ type UserLoginResponse {
 type UserLoginStatus {
   code: Float!
   message: String!
+  token: String!
 }
 
 type UserRegisterResponse {
