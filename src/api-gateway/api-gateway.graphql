@@ -879,6 +879,7 @@ type UserRegisterResponse {
 type UserRegisterStatus {
   code: Float!
   message: String!
+  token: String!
 }
 
 type VersionInfo {

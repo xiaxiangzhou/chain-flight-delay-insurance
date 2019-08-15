@@ -34,6 +34,9 @@ export class UserRegisterStatus {
 
   @Field(_ => String)
   public message: string;
+
+  @Field(_ => String)
+  public token: string;
 }
 
 @ObjectType()
@@ -235,10 +238,14 @@ export class UserResolver implements ResolverInterface<() => String> {
 
     try {
       await model.user.registerUser(input.email, input.hashedPassword);
+      const token = jwt.sign({ email: input.email }, SECRET_KEY, {
+        expiresIn: "365d"
+      });
 
       const userRegisterStatus = new UserRegisterStatus();
       userRegisterStatus.code = UserRegisterCode.Success.valueOf();
       userRegisterStatus.message = "User Registered Sucessfully !";
+      userRegisterStatus.token = token;
       response.result = userRegisterStatus;
 
       return response;
@@ -247,9 +254,11 @@ export class UserResolver implements ResolverInterface<() => String> {
       if (e.code === 11000) {
         userRegisterStatus.code = UserRegisterCode.AlreadyRegister.valueOf();
         userRegisterStatus.message = "User Already Registered !";
+        userRegisterStatus.token = "";
       } else {
         userRegisterStatus.code = UserRegisterCode.InternalServerError.valueOf();
         userRegisterStatus.message = "Internal Server Error !";
+        userRegisterStatus.token = "";
       }
       response.result = userRegisterStatus;
 
@@ -315,7 +324,10 @@ export class UserResolver implements ResolverInterface<() => String> {
     @Ctx() { model, headers }: IContext
   ): Promise<ChangePasswordResponse> {
     try {
-      let jwtVerified = await jwt.verify(headers["x-access-token"], SECRET_KEY);
+      const jwtVerified = await jwt.verify(
+        headers["x-access-token"],
+        SECRET_KEY
+      );
 
       if (jwtVerified.email !== input.email) {
         const changePasswordStatus = new ChangePasswordStatus();
