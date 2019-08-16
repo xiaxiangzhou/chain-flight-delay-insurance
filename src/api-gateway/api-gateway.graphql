@@ -193,6 +193,20 @@ type CoinPrice {
   marketCapUsd: String!
 }
 
+type ContractByIdResponse {
+  code: Float!
+  message: String!
+  result: ContractDetail!
+}
+
+type ContractDetail {
+  code: Float!
+  message: String!
+  name: String!
+  abi: String!
+  bin: String!
+}
+
 type CreateDeposit {
   chainID: Int!
   amount: Buffer!
@@ -690,6 +704,9 @@ type Query {
     startPoint: Float!
     pageSize: Float!
   ): OrdersByBuyerEmailResponse!
+
+  # read contract from id
+  getContractById(id: String!): ContractByIdResponse!
   fetchCoinPrice: CoinPrice!
   fetchVersionInfo: VersionInfo!
 

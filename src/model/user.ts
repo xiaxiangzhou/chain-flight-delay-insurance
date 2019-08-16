@@ -100,8 +100,4 @@ export class UserModel {
   public findUser(email: string): DocumentQuery<Array<IUserDoc>, IUserDoc> {
     return this.Model.find({ email: email });
   }
-
-  /*public getAllFlights(): DocumentQuery<Array<IFlightDoc>, IFlightDoc> {
-    return this.Model.find();
-  }*/
 }

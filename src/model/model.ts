@@ -1,5 +1,6 @@
 // @ts-ignore
 import { MyServer } from "../server/start-server";
+import { ContractModel } from "./contract";
 import { FlightModel } from "./flight";
 import { OrderModel } from "./order";
 import { RecommandationModel } from "./recommandation";
@@ -10,6 +11,7 @@ export type Model = {
   flight: FlightModel;
   order: OrderModel;
   recommandation: RecommandationModel;
+  contract: ContractModel;
 };
 
 export function setModel(server: MyServer): void {
@@ -19,4 +21,5 @@ export function setModel(server: MyServer): void {
   server.model.flight = new FlightModel(server.gateways);
   server.model.order = new OrderModel(server.gateways);
   server.model.recommandation = new RecommandationModel(server.gateways);
+  server.model.contract = new ContractModel(server.gateways);
 }

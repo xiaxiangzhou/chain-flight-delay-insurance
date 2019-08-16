@@ -414,6 +414,48 @@ export class OrdersByBuyerEmailRequest {
   public pageSize: number;
 }
 
+export enum ContractDetailCode {
+  Success,
+  ContractNotFound,
+  InternalServerError
+}
+
+@ObjectType()
+export class ContractDetail {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => String)
+  public name: string;
+
+  @Field(_ => String)
+  public abi: string;
+
+  @Field(_ => String)
+  public bin: string;
+}
+
+@ObjectType()
+export class ContractByIdResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => ContractDetail)
+  public result: ContractDetail;
+}
+
+@ArgsType()
+export class ContractByIdRequest {
+  @Field(_ => String)
+  public id: string;
+}
+
 @Resolver(_ => String)
 export class FlightsResolver implements ResolverInterface<() => String> {
   @Query(_ => String)
@@ -796,6 +838,51 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "Internal Server Error !";
       response.result = orderDetails;
+
+      return response;
+    }
+  }
+
+  @Query(_ => ContractByIdResponse, {
+    description: "read contract from id"
+  })
+  public async getContractById(
+    @Args(_ => ContractByIdRequest)
+    input: ContractByIdRequest,
+    @Ctx() { model }: IContext
+  ): Promise<ContractByIdResponse> {
+    const response = new ContractByIdResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+
+    try {
+      const res = await model.contract.getContract(input.id);
+      const contractDetail = new ContractDetail();
+      contractDetail.name = "";
+      contractDetail.abi = "";
+      contractDetail.bin = "";
+      response.result = contractDetail;
+
+      if (res === null) {
+        contractDetail.code = ContractDetailCode.ContractNotFound.valueOf();
+        contractDetail.message = "Contract Not Found !";
+        return response;
+      }
+
+      contractDetail.name = res.name;
+      contractDetail.abi = res.abi;
+      contractDetail.bin = res.bin;
+      contractDetail.code = ContractDetailCode.Success.valueOf();
+      contractDetail.message = "";
+      return response;
+    } catch (e) {
+      const contractDetail = new ContractDetail();
+      contractDetail.code = ContractDetailCode.InternalServerError.valueOf();
+      contractDetail.message = "Internal Server Error !";
+      contractDetail.name = "";
+      contractDetail.abi = "";
+      contractDetail.bin = "";
+      response.result = contractDetail;
 
       return response;
     }
