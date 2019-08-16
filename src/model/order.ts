@@ -11,7 +11,8 @@ type IOrder = {
   airlineCode: string;
   flightNumber: number;
   date: string;
-  userId: string;
+  sellerEmail: string;
+  buyerEmail: string;
   scheduleTakeOff: number;
   contractAddress: string;
   creatorAddress: string;
@@ -39,7 +40,8 @@ export class OrderModel {
       airlineCode: { type: String },
       flightNumber: { type: Number },
       date: { type: String },
-      userId: { type: String },
+      sellerEmail: { type: String },
+      buyerEmail: { type: String },
       scheduleTakeOff: { type: Number },
       contractAddress: { type: String },
       creatorAddress: { type: String },
@@ -75,7 +77,8 @@ export class OrderModel {
     airlineCode: string,
     flightNumber: number,
     date: string,
-    userId: string,
+    sellerEmail: string,
+    buyerEmail: string,
     scheduleTakeOff: number,
     contractAddress: string,
     creatorAddress: string,
@@ -93,7 +96,8 @@ export class OrderModel {
         airlineCode,
         flightNumber,
         date,
-        userId,
+        sellerEmail,
+        buyerEmail,
         scheduleTakeOff,
         contractAddress,
         creatorAddress,
@@ -110,7 +114,8 @@ export class OrderModel {
         airlineCode,
         flightNumber,
         date,
-        userId,
+        sellerEmail,
+        buyerEmail,
         scheduleTakeOff,
         contractAddress,
         creatorAddress,
@@ -125,6 +130,29 @@ export class OrderModel {
       },
       { upsert: true, new: true }
     );
+  }
+
+  public getOrdersByBuyerEmail(
+    buyerEmail: string,
+    startPoint: number,
+    pageSize: number
+  ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
+    return this.Model.find({ buyerEmail: buyerEmail })
+      .sort({ scheduleTakeOff: -1 })
+      .skip(startPoint)
+      .limit(pageSize);
+  }
+
+  public getOrdersByBuyerEmailByOrderStatus(
+    buyerEmail: string,
+    orderStatus: number,
+    startPoint: number,
+    pageSize: number
+  ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
+    return this.Model.find({ buyerEmail: buyerEmail, orderStatus: orderStatus })
+      .sort({ scheduleTakeOff: -1 })
+      .skip(startPoint)
+      .limit(pageSize);
   }
 
   public getAvailableOrdersByFlightAndDate(

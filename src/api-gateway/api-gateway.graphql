@@ -400,6 +400,37 @@ type Order {
   contractAddress: String!
 }
 
+type OrderDetail {
+  airlineCode: String!
+  flightNumber: Float!
+  date: String!
+  sellerEmail: String!
+  buyerEmail: String!
+  scheduleTakeOff: Float!
+  contractAddress: String!
+  creatorAddress: String!
+  buyerAddress: String!
+  platformAddress: String!
+  oracleAddress: String!
+  orderStatus: Float!
+  maxBenefit: Float!
+  premium: Float!
+  flightContractId: String!
+  oracleContractId: String!
+}
+
+type OrderDetails {
+  code: Float!
+  message: String!
+  orderDetails: [OrderDetail!]
+}
+
+type OrdersByBuyerEmailResponse {
+  code: Float!
+  message: String!
+  result: OrderDetails!
+}
+
 type PlumChallengeExit {
   subChainAddress: String!
   coinID: Int!
@@ -651,6 +682,14 @@ type Query {
 
   # read supported flights
   getSupportedFlights: SupportedFlightsResponse!
+
+  # read orders of a buyer
+  getOrdersByBuyerEmail(
+    buyerEmail: String!
+    orderStatus: Float
+    startPoint: Float!
+    pageSize: Float!
+  ): OrdersByBuyerEmailResponse!
   fetchCoinPrice: CoinPrice!
   fetchVersionInfo: VersionInfo!
 

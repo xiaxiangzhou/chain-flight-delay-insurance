@@ -318,6 +318,102 @@ export class AvailableOrdersRequest {
   public flightNumber: number;
 }
 
+@ObjectType()
+export class OrderDetail {
+  @Field(_ => String)
+  public airlineCode: string;
+
+  @Field(_ => Number)
+  public flightNumber: number;
+
+  @Field(_ => String)
+  public date: string;
+
+  @Field(_ => String)
+  public sellerEmail: string;
+
+  @Field(_ => String)
+  public buyerEmail: string;
+
+  @Field(_ => Number)
+  public scheduleTakeOff: number;
+
+  @Field(_ => String)
+  public contractAddress: string;
+
+  @Field(_ => String)
+  public creatorAddress: string;
+
+  @Field(_ => String)
+  public buyerAddress: string;
+
+  @Field(_ => String)
+  public platformAddress: string;
+
+  @Field(_ => String)
+  public oracleAddress: string;
+
+  @Field(_ => Number)
+  public orderStatus: number;
+
+  @Field(_ => Number)
+  public maxBenefit: number;
+
+  @Field(_ => Number)
+  public premium: number;
+
+  @Field(_ => String)
+  public flightContractId: string;
+
+  @Field(_ => String)
+  public oracleContractId: string;
+}
+
+export enum OrderDetailsCode {
+  Success,
+  UserNotFound,
+  InternalServerError
+}
+
+@ObjectType()
+export class OrderDetails {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => [OrderDetail], { nullable: true })
+  public orderDetails: Array<OrderDetail>;
+}
+
+@ObjectType()
+export class OrdersByBuyerEmailResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => OrderDetails)
+  public result: OrderDetails;
+}
+
+@ArgsType()
+export class OrdersByBuyerEmailRequest {
+  @Field(_ => String)
+  public buyerEmail: string;
+
+  @Field(_ => Number, { nullable: true })
+  public orderStatus: number;
+
+  @Field(_ => Number)
+  public startPoint: number;
+
+  @Field(_ => Number)
+  public pageSize: number;
+}
+
 @Resolver(_ => String)
 export class FlightsResolver implements ResolverInterface<() => String> {
   @Query(_ => String)
@@ -336,8 +432,9 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       266,
       "2019-08-10",
       "",
+      "xiaxiangzhou@gmail.com",
       1565457330,
-      "io1jhzav2m2zsz5kyehvmcuskus3unepputa223sy",
+      "1",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
       "",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
@@ -626,5 +723,81 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     response.result = supportedFlights;
 
     return response;
+  }
+
+  @Query(_ => OrdersByBuyerEmailResponse, {
+    description: "read orders of a buyer"
+  })
+  public async getOrdersByBuyerEmail(
+    @Args(_ => OrdersByBuyerEmailRequest)
+    input: OrdersByBuyerEmailRequest,
+    @Ctx() { model }: IContext
+  ): Promise<OrdersByBuyerEmailResponse> {
+    const response = new OrdersByBuyerEmailResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+
+    try {
+      const res = await model.user.findUser(input.buyerEmail);
+      const orderDetails = new OrderDetails();
+      orderDetails.orderDetails = [];
+      response.result = orderDetails;
+
+      if (res.length === 0) {
+        orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
+        orderDetails.message = "User Not Found !";
+        return response;
+      }
+
+      let orders = [];
+      if (input.orderStatus === undefined) {
+        // not status specific
+        orders = await model.order.getOrdersByBuyerEmail(
+          input.buyerEmail,
+          input.startPoint,
+          input.pageSize
+        );
+      } else {
+        orders = await model.order.getOrdersByBuyerEmailByOrderStatus(
+          input.buyerEmail,
+          input.orderStatus,
+          input.startPoint,
+          input.pageSize
+        );
+      }
+
+      for (const order of orders) {
+        const orderDetail = new OrderDetail();
+        orderDetail.airlineCode = order.airlineCode;
+        orderDetail.flightNumber = order.flightNumber;
+        orderDetail.date = order.date;
+        orderDetail.sellerEmail = order.sellerEmail;
+        orderDetail.buyerEmail = order.buyerEmail;
+        orderDetail.scheduleTakeOff = order.scheduleTakeOff;
+        orderDetail.contractAddress = order.contractAddress;
+        orderDetail.creatorAddress = order.creatorAddress;
+        orderDetail.buyerAddress = order.buyerAddress;
+        orderDetail.platformAddress = order.platformAddress;
+        orderDetail.oracleAddress = order.oracleAddress;
+        orderDetail.orderStatus = order.orderStatus;
+        orderDetail.maxBenefit = order.maxBenefit;
+        orderDetail.premium = order.premium;
+        orderDetail.flightContractId = order.flightContractId;
+        orderDetail.oracleContractId = order.oracleContractId;
+
+        response.result.orderDetails.push(orderDetail);
+      }
+
+      orderDetails.code = OrderDetailsCode.Success.valueOf();
+      orderDetails.message = "";
+      return response;
+    } catch (e) {
+      const orderDetails = new OrderDetails();
+      orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
+      orderDetails.message = "Internal Server Error !";
+      response.result = orderDetails;
+
+      return response;
+    }
   }
 }
