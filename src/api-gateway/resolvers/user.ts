@@ -423,14 +423,13 @@ export class UserResolver implements ResolverInterface<() => String> {
         const salt = bcrypt.genSaltSync(10);
         const hash = bcrypt.hashSync(random, salt);
         const now = new Date();
-        console.log(random);
 
         await model.user.saveTempPassword(user.email, hash, now.getTime());
 
         try {
-          const configName = "Xiangzhou Xia";
-          const configPassword = "a15120079705";
-          const configEmail = "xiaxiangzhou@gmail.com";
+          const configName = "Chainsurance";
+          const configPassword = "bhldfoyfzrnjefnz";
+          const configEmail = "chainsuranceinc@gmail.com";
 
           const transporter = nodemailer.createTransport(
             `smtps://${configEmail}:${configPassword}@smtp.gmail.com`
