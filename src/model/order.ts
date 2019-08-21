@@ -194,7 +194,8 @@ export class OrderModel {
       {
         $match: {
           airlineCode: airlineCode,
-          flightNumber: flightNumber
+          flightNumber: flightNumber,
+          orderStatus: 0
         }
       },
       {

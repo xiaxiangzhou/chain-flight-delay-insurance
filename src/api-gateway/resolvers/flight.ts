@@ -977,7 +977,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     response.code = StatusCode.Success.valueOf();
     response.message = "";
 
-    let contractName = "one";
+    const contractName = "one";
 
     try {
       const res = await model.contract.getContractByName(contractName);
