@@ -65,4 +65,10 @@ export class ContractModel {
   ): DocumentQuery<IContractDoc | null, IContractDoc> {
     return this.Model.findOne({ _id: id });
   }
+
+  public getContractByName(
+    name: string
+  ): DocumentQuery<IContractDoc | null, IContractDoc> {
+    return this.Model.findOne({ name: name });
+  }
 }

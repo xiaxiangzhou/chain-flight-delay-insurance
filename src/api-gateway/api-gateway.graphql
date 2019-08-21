@@ -137,6 +137,17 @@ type BlockProducerInfo {
 # JS Buffer or Uint8Array
 scalar Buffer
 
+type BuyContractResponse {
+  code: Float!
+  message: String!
+  result: BuyContractStatus!
+}
+
+type BuyContractStatus {
+  code: Float!
+  message: String!
+}
+
 type Candidate {
   address: String!
   votes: Buffer
@@ -197,6 +208,21 @@ type ContractByIdResponse {
   code: Float!
   message: String!
   result: ContractDetail!
+}
+
+type ContractConfig {
+  code: Float!
+  message: String!
+  contractName: String!
+  contractAbi: String!
+  contractBin: String!
+  blockchainAddress: String!
+}
+
+type ContractConfigResponse {
+  code: Float!
+  message: String!
+  result: ContractConfig!
 }
 
 type ContractDetail {
@@ -705,8 +731,17 @@ type Query {
     pageSize: Float!
   ): OrdersByBuyerEmailResponse!
 
+  # buy contract
+  buyContract(
+    contractAddress: String!
+    buyerEmail: String!
+  ): BuyContractResponse!
+
   # read contract from id
   getContractById(id: String!): ContractByIdResponse!
+
+  # read contract config
+  getContractConfig: ContractConfigResponse!
   fetchCoinPrice: CoinPrice!
   fetchVersionInfo: VersionInfo!
 

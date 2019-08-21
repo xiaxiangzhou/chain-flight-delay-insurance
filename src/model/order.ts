@@ -132,6 +132,29 @@ export class OrderModel {
     );
   }
 
+  public buyOrder(
+    contractAddress: string,
+    buyerEmail: string
+  ): DocumentQuery<IOrderDoc | null, IOrderDoc> {
+    return this.Model.findOneAndUpdate(
+      {
+        contractAddress
+      },
+      {
+        buyerEmail: buyerEmail,
+        contractAddress: contractAddress,
+        orderStatus: 1
+      },
+      { upsert: true, new: true }
+    );
+  }
+
+  public getOrderByContractAddress(
+    contractAddress: string
+  ): DocumentQuery<IOrderDoc | null, IOrderDoc> {
+    return this.Model.findOne({ contractAddress: contractAddress });
+  }
+
   public getOrdersByBuyerEmail(
     buyerEmail: string,
     startPoint: number,

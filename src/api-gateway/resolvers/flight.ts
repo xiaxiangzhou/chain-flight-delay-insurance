@@ -450,10 +450,84 @@ export class ContractByIdResponse {
   public result: ContractDetail;
 }
 
+export enum ContractConfigCode {
+  Success,
+  InternalServerError
+}
+
+@ObjectType()
+export class ContractConfig {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => String)
+  public contractName: string;
+
+  @Field(_ => String)
+  public contractAbi: string;
+
+  @Field(_ => String)
+  public contractBin: string;
+
+  @Field(_ => String)
+  public blockchainAddress: string;
+}
+
+@ObjectType()
+export class ContractConfigResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => ContractConfig)
+  public result: ContractConfig;
+}
+
 @ArgsType()
 export class ContractByIdRequest {
   @Field(_ => String)
   public id: string;
+}
+
+export enum BuyContractCode {
+  Success,
+  AlreadyBought,
+  InternalServerError
+}
+
+@ObjectType()
+export class BuyContractStatus {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+}
+
+@ObjectType()
+export class BuyContractResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => BuyContractStatus)
+  public result: BuyContractStatus;
+}
+
+@ArgsType()
+export class BuyContractRequest {
+  @Field(_ => String)
+  public contractAddress: string;
+
+  @Field(_ => String)
+  public buyerEmail: string;
 }
 
 @Resolver(_ => String)
@@ -471,16 +545,16 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   ): Promise<FlightDetailResponse> {
     /*await model.order.upsertOrder(
       "AS",
-      266,
-      "2019-08-10",
+      345,
+      "2019-09-12",
       "",
-      "xiaxiangzhou@gmail.com",
-      1565457330,
-      "1",
+      "",
+      1568262099,
+      "io142m2eetuhsc0ax0hjy46gnw0asgf76h4nlsfj4",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
       "",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
-      "io19r8cj7pmpr8jdt85p5nh7jw5sw8yk5dd86k43t",
+      "io1vlctxpm5gylma07vuyt6lxhuasnsftwrvq36z5",
       0,
       10000000000000000000,
       5000000000000000000,
@@ -598,43 +672,6 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   public async getPolicy(): //@Ctx() { headers }: IContext
   Promise<PolicyResponse> {
     //return gateways.antenna.readContract(input);
-
-    /*try {
-      await jwt.verify(headers['x-access-token'], SECRET_KEY);
-    } catch (e) {
-      const response = new PolicyResponse();
-      const policy = new Policy();
-      policy.premium = 0;
-      policy.traditionalMaxBenefit = 0;
-      policy.unknown = 0;
-      policy.ontime = 0;
-      policy.cancel = 0;
-      policy.divert = 0;
-      policy.delay0h = 0;
-      policy.delay1h = 0;
-      policy.delay2h = 0;
-      policy.delay3h = 0;
-      policy.delay4h = 0;
-      policy.delay5h = 0;
-      policy.delay6h = 0;
-      policy.delay7h = 0;
-      policy.delay8h = 0;
-      policy.delay9h = 0;
-      policy.delay10hplus = 0;
-      response.result = policy;
-
-      if (e.name === "TokenExpiredError") {
-        response.code = StatusCode.TokenExpired.valueOf();
-        response.message = "token expired";
-      }
-      else {
-        // return server internal error
-        response.code = StatusCode.InternalServerError.valueOf();
-        response.message = e.message;
-      }
-
-      return response;
-    }*/
 
     const policy = new Policy();
     policy.premium = 5;
@@ -843,6 +880,46 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     }
   }
 
+  @Query(_ => BuyContractResponse, {
+    description: "buy contract"
+  })
+  public async buyContract(
+    @Args(_ => BuyContractRequest)
+    input: BuyContractRequest,
+    @Ctx() { model }: IContext
+  ): Promise<BuyContractResponse> {
+    const response = new BuyContractResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+
+    try {
+      const buyContractStatus = new BuyContractStatus();
+      const res = await model.order.getOrderByContractAddress(
+        input.contractAddress
+      );
+
+      if (res.buyerEmail !== "" && res.buyerEmail !== undefined) {
+        buyContractStatus.code = BuyContractCode.AlreadyBought.valueOf();
+        buyContractStatus.message = "Already Bought !";
+        response.result = buyContractStatus;
+        return response;
+      }
+
+      await model.order.buyOrder(input.contractAddress, input.buyerEmail);
+      buyContractStatus.code = BuyContractCode.Success.valueOf();
+      buyContractStatus.message = "";
+      response.result = buyContractStatus;
+      return response;
+    } catch (e) {
+      const buyContractStatus = new BuyContractStatus();
+      buyContractStatus.code = BuyContractCode.InternalServerError.valueOf();
+      buyContractStatus.message = "Internal Server Error !";
+      response.result = buyContractStatus;
+
+      return response;
+    }
+  }
+
   @Query(_ => ContractByIdResponse, {
     description: "read contract from id"
   })
@@ -854,6 +931,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     const response = new ContractByIdResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
+
+    //let contractId = "one";
 
     try {
       const res = await model.contract.getContract(input.id);
@@ -883,6 +962,43 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       contractDetail.abi = "";
       contractDetail.bin = "";
       response.result = contractDetail;
+
+      return response;
+    }
+  }
+
+  @Query(_ => ContractConfigResponse, {
+    description: "read contract config"
+  })
+  public async getContractConfig(@Ctx() { model }: IContext): Promise<
+    ContractConfigResponse
+  > {
+    const response = new ContractConfigResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+
+    let contractName = "one";
+
+    try {
+      const res = await model.contract.getContractByName(contractName);
+      const contractConfig = new ContractConfig();
+      contractConfig.contractName = res.name;
+      contractConfig.contractAbi = res.abi;
+      contractConfig.contractBin = res.bin;
+      contractConfig.blockchainAddress = "api.testnet.iotex.one:80";
+      response.result = contractConfig;
+
+      contractConfig.code = ContractConfigCode.Success.valueOf();
+      contractConfig.message = "";
+      return response;
+    } catch (e) {
+      const contractConfig = new ContractConfig();
+      contractConfig.code = ContractConfigCode.InternalServerError.valueOf();
+      contractConfig.message = "Internal Server Error !";
+      contractConfig.contractName = "";
+      contractConfig.contractAbi = "";
+      contractConfig.contractBin = "";
+      response.result = contractConfig;
 
       return response;
     }
