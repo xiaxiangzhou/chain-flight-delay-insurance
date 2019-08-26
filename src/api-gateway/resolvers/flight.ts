@@ -12,6 +12,7 @@ import { Field, ObjectType } from "type-graphql";
 import util from "util";
 //import * as jwt from "jsonwebtoken";
 import { Model } from "../../model";
+import { IFlightDoc } from "../../model/flight";
 
 export interface IContext {
   model: Model;
@@ -318,6 +319,31 @@ export class AvailableOrdersRequest {
   public flightNumber: number;
 }
 
+export enum OrderStatusCode {
+  WaitToFly,
+  OrderProcessing,
+  StatusReported,
+  OrderClosed
+}
+
+export enum FlightStatusCode {
+  Unknown,
+  OnTime,
+  Cancel,
+  Divert,
+  Delay0H,
+  Delay1H,
+  Delay2H,
+  Delay3H,
+  Delay4H,
+  Delay5H,
+  Delay6H,
+  Delay7H,
+  Delay8H,
+  Delay9H,
+  Delay10H
+}
+
 @ObjectType()
 export class OrderDetail {
   @Field(_ => String)
@@ -325,6 +351,12 @@ export class OrderDetail {
 
   @Field(_ => Number)
   public flightNumber: number;
+
+  @Field(_ => String)
+  public srcAirport: string;
+
+  @Field(_ => String)
+  public dstAirport: string;
 
   @Field(_ => String)
   public date: string;
@@ -355,6 +387,12 @@ export class OrderDetail {
 
   @Field(_ => Number)
   public orderStatus: number;
+
+  @Field(_ => Number)
+  public flightStatus: number;
+
+  @Field(_ => Number)
+  public gain: number;
 
   @Field(_ => Number)
   public maxBenefit: number;
@@ -546,11 +584,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     /*await model.order.upsertOrder(
       "AS",
       345,
-      "2019-09-12",
+      "2019-08-28",
       "",
       "",
-      1568262099,
-      "io142m2eetuhsc0ax0hjy46gnw0asgf76h4nlsfj4",
+      1566994980,
+      "io1t3269txauf9svqcvz3znnea5hvvvpnfadx65cm",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
       "",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
@@ -845,10 +883,20 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         );
       }
 
+      const flights = await model.flight.getAllFlights();
+      const flightsSearch: { [id: string]: IFlightDoc } = {};
+      for (const flight of flights) {
+        flightsSearch[flight.airlineCode + flight.flightNumber] = flight;
+      }
+
       for (const order of orders) {
         const orderDetail = new OrderDetail();
         orderDetail.airlineCode = order.airlineCode;
         orderDetail.flightNumber = order.flightNumber;
+        orderDetail.srcAirport =
+          flightsSearch[order.airlineCode + order.flightNumber].srcAirport;
+        orderDetail.dstAirport =
+          flightsSearch[order.airlineCode + order.flightNumber].dstAirport;
         orderDetail.date = order.date;
         orderDetail.sellerEmail = order.sellerEmail;
         orderDetail.buyerEmail = order.buyerEmail;
@@ -858,7 +906,9 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         orderDetail.buyerAddress = order.buyerAddress;
         orderDetail.platformAddress = order.platformAddress;
         orderDetail.oracleAddress = order.oracleAddress;
-        orderDetail.orderStatus = order.orderStatus;
+        orderDetail.orderStatus = OrderStatusCode.WaitToFly.valueOf();
+        orderDetail.flightStatus = FlightStatusCode.Unknown.valueOf();
+        orderDetail.gain = 0;
         orderDetail.maxBenefit = order.maxBenefit;
         orderDetail.premium = order.premium;
         orderDetail.flightContractId = order.flightContractId;

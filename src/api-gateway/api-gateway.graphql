@@ -443,6 +443,8 @@ type Order {
 type OrderDetail {
   airlineCode: String!
   flightNumber: Float!
+  srcAirport: String!
+  dstAirport: String!
   date: String!
   sellerEmail: String!
   buyerEmail: String!
@@ -453,6 +455,8 @@ type OrderDetail {
   platformAddress: String!
   oracleAddress: String!
   orderStatus: Float!
+  flightStatus: Float!
+  gain: Float!
   maxBenefit: Float!
   premium: Float!
   flightContractId: String!

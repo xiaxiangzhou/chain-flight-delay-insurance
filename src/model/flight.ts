@@ -14,7 +14,7 @@ type IFlight = {
   dstAirport: string;
 };
 
-type IFlightDoc = mongoose.Document &
+export type IFlightDoc = mongoose.Document &
   IFlight & {
     createAt: Date;
     updateAt: Date;
@@ -60,6 +60,16 @@ export class FlightModel {
       { airlineCode, flightNumber, srcAirport, dstAirport },
       { upsert: true, new: true }
     );
+  }
+
+  public getFlight(
+    airlineCode: string,
+    flightNumber: number
+  ): DocumentQuery<IFlightDoc | null, IFlightDoc> {
+    return this.Model.findOne({
+      airlineCode: airlineCode,
+      flightNumber: flightNumber
+    });
   }
 
   public getAllFlights(): DocumentQuery<Array<IFlightDoc>, IFlightDoc> {
