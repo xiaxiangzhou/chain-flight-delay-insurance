@@ -155,12 +155,21 @@ export class OrderModel {
     return this.Model.findOne({ contractAddress: contractAddress });
   }
 
-  public getOrdersByBuyerEmail(
+  public getPendingOrdersByBuyerEmail(
+    buyerEmail: string
+  ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
+    return this.Model.find({ buyerEmail: buyerEmail })
+      .where("orderStatus")
+      .ne(3) // not closed
+      .sort({ scheduleTakeOff: -1 });
+  }
+
+  public getClosedOrdersByBuyerEmail(
     buyerEmail: string,
     startPoint: number,
     pageSize: number
   ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
-    return this.Model.find({ buyerEmail: buyerEmail })
+    return this.Model.find({ buyerEmail: buyerEmail, orderStatus: 3 })
       .sort({ scheduleTakeOff: -1 })
       .skip(startPoint)
       .limit(pageSize);

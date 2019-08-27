@@ -421,6 +421,9 @@ export class OrderDetails {
   @Field(_ => String)
   public message: string;
 
+  @Field(_ => Number)
+  public total: number;
+
   @Field(_ => [OrderDetail], { nullable: true })
   public orderDetails: Array<OrderDetail>;
 }
@@ -442,14 +445,17 @@ export class OrdersByBuyerEmailRequest {
   @Field(_ => String)
   public buyerEmail: string;
 
-  @Field(_ => Number, { nullable: true })
-  public orderStatus: number;
-
   @Field(_ => Number)
-  public startPoint: number;
+  public pageNum: number;
 
   @Field(_ => Number)
   public pageSize: number;
+}
+
+@ArgsType()
+export class PendingOrdersByBuyerEmailRequest {
+  @Field(_ => String)
+  public buyerEmail: string;
 }
 
 export enum ContractDetailCode {
@@ -845,7 +851,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   @Query(_ => OrdersByBuyerEmailResponse, {
     description: "read orders of a buyer"
   })
-  public async getOrdersByBuyerEmail(
+  public async getClosedOrdersByBuyerEmail(
     @Args(_ => OrdersByBuyerEmailRequest)
     input: OrdersByBuyerEmailRequest,
     @Ctx() { model }: IContext
@@ -866,27 +872,30 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         return response;
       }
 
-      let orders = [];
-      if (input.orderStatus === undefined) {
-        // not status specific
-        orders = await model.order.getOrdersByBuyerEmail(
-          input.buyerEmail,
-          input.startPoint,
-          input.pageSize
-        );
-      } else {
-        orders = await model.order.getOrdersByBuyerEmailByOrderStatus(
-          input.buyerEmail,
-          input.orderStatus,
-          input.startPoint,
-          input.pageSize
-        );
-      }
-
       const flights = await model.flight.getAllFlights();
       const flightsSearch: { [id: string]: IFlightDoc } = {};
       for (const flight of flights) {
         flightsSearch[flight.airlineCode + flight.flightNumber] = flight;
+      }
+
+      // not status specific
+      /*let pendingOrders = await model.order.getPendingOrdersByBuyerEmail(
+        input.buyerEmail
+      );*/
+      const closedOnesInPending = [];
+
+      let orders = [];
+      if (input.pageNum * input.pageSize < closedOnesInPending.length) {
+        orders = [];
+      } else {
+        const startPoint =
+          input.pageNum * input.pageSize - closedOnesInPending.length;
+        // not status specific
+        orders = await model.order.getClosedOrdersByBuyerEmail(
+          input.buyerEmail,
+          startPoint,
+          input.pageSize
+        );
       }
 
       for (const order of orders) {
@@ -916,6 +925,91 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
         response.result.orderDetails.push(orderDetail);
       }
+      response.result.total = response.result.orderDetails.length;
+
+      orderDetails.code = OrderDetailsCode.Success.valueOf();
+      orderDetails.message = "";
+      return response;
+    } catch (e) {
+      const orderDetails = new OrderDetails();
+      orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
+      orderDetails.message = "Internal Server Error !";
+      response.result = orderDetails;
+
+      return response;
+    }
+  }
+
+  @Query(_ => OrdersByBuyerEmailResponse, {
+    description: "read orders of a buyer"
+  })
+  public async getPendingOrdersByBuyerEmail(
+    @Args(_ => PendingOrdersByBuyerEmailRequest)
+    input: PendingOrdersByBuyerEmailRequest,
+    @Ctx() { model }: IContext
+  ): Promise<OrdersByBuyerEmailResponse> {
+    const response = new OrdersByBuyerEmailResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+
+    try {
+      const res = await model.user.findUser(input.buyerEmail);
+      const orderDetails = new OrderDetails();
+      orderDetails.orderDetails = [];
+      response.result = orderDetails;
+
+      if (res.length === 0) {
+        orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
+        orderDetails.message = "User Not Found !";
+        return response;
+      }
+
+      // not status specific
+      const orders = await model.order.getPendingOrdersByBuyerEmail(
+        input.buyerEmail
+      );
+
+      const flights = await model.flight.getAllFlights();
+      const flightsSearch: { [id: string]: IFlightDoc } = {};
+      for (const flight of flights) {
+        flightsSearch[flight.airlineCode + flight.flightNumber] = flight;
+      }
+
+      for (const order of orders) {
+        // get status from contract
+        const contractStatus = OrderStatusCode.WaitToFly;
+        //@ts-ignore
+        if (contractStatus === OrderStatusCode.OrderClosed) {
+          continue;
+        }
+
+        const orderDetail = new OrderDetail();
+        orderDetail.airlineCode = order.airlineCode;
+        orderDetail.flightNumber = order.flightNumber;
+        orderDetail.srcAirport =
+          flightsSearch[order.airlineCode + order.flightNumber].srcAirport;
+        orderDetail.dstAirport =
+          flightsSearch[order.airlineCode + order.flightNumber].dstAirport;
+        orderDetail.date = order.date;
+        orderDetail.sellerEmail = order.sellerEmail;
+        orderDetail.buyerEmail = order.buyerEmail;
+        orderDetail.scheduleTakeOff = order.scheduleTakeOff;
+        orderDetail.contractAddress = order.contractAddress;
+        orderDetail.creatorAddress = order.creatorAddress;
+        orderDetail.buyerAddress = order.buyerAddress;
+        orderDetail.platformAddress = order.platformAddress;
+        orderDetail.oracleAddress = order.oracleAddress;
+        orderDetail.orderStatus = contractStatus.valueOf();
+        orderDetail.flightStatus = FlightStatusCode.Unknown.valueOf();
+        orderDetail.gain = 0;
+        orderDetail.maxBenefit = order.maxBenefit;
+        orderDetail.premium = order.premium;
+        orderDetail.flightContractId = order.flightContractId;
+        orderDetail.oracleContractId = order.oracleContractId;
+
+        response.result.orderDetails.push(orderDetail);
+      }
+      response.result.total = response.result.orderDetails.length;
 
       orderDetails.code = OrderDetailsCode.Success.valueOf();
       orderDetails.message = "";

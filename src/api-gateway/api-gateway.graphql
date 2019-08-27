@@ -466,6 +466,7 @@ type OrderDetail {
 type OrderDetails {
   code: Float!
   message: String!
+  total: Float!
   orderDetails: [OrderDetail!]
 }
 
@@ -728,12 +729,14 @@ type Query {
   getSupportedFlights: SupportedFlightsResponse!
 
   # read orders of a buyer
-  getOrdersByBuyerEmail(
+  getClosedOrdersByBuyerEmail(
     buyerEmail: String!
-    orderStatus: Float
-    startPoint: Float!
+    pageNum: Float!
     pageSize: Float!
   ): OrdersByBuyerEmailResponse!
+
+  # read orders of a buyer
+  getPendingOrdersByBuyerEmail(buyerEmail: String!): OrdersByBuyerEmailResponse!
 
   # buy contract
   buyContract(
