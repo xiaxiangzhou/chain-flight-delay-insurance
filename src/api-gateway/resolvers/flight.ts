@@ -1,4 +1,6 @@
 // tslint:disable:no-any
+// @ts-ignore
+import * as jwt from "jsonwebtoken";
 import {
   Args,
   ArgsType,
@@ -13,6 +15,7 @@ import util from "util";
 //import * as jwt from "jsonwebtoken";
 import { Model } from "../../model";
 import { IFlightDoc } from "../../model/flight";
+import { IOrderDoc } from "../../model/order";
 
 export interface IContext {
   model: Model;
@@ -410,6 +413,7 @@ export class OrderDetail {
 export enum OrderDetailsCode {
   Success,
   UserNotFound,
+  UserNotMatch,
   InternalServerError
 }
 
@@ -848,17 +852,81 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     return response;
   }
 
+  private orderToOrderDetail(
+    flightsSearch: { [id: string]: IFlightDoc },
+    order: IOrderDoc
+  ): OrderDetail {
+    const orderDetail = new OrderDetail();
+    orderDetail.airlineCode = order.airlineCode;
+    orderDetail.flightNumber = order.flightNumber;
+    orderDetail.srcAirport =
+      flightsSearch[order.airlineCode + order.flightNumber].srcAirport;
+    orderDetail.dstAirport =
+      flightsSearch[order.airlineCode + order.flightNumber].dstAirport;
+    orderDetail.date = order.date;
+    orderDetail.sellerEmail = order.sellerEmail;
+    orderDetail.buyerEmail = order.buyerEmail;
+    orderDetail.scheduleTakeOff = order.scheduleTakeOff;
+    orderDetail.contractAddress = order.contractAddress;
+    orderDetail.creatorAddress = order.creatorAddress;
+    orderDetail.buyerAddress = order.buyerAddress;
+    orderDetail.platformAddress = order.platformAddress;
+    orderDetail.oracleAddress = order.oracleAddress;
+    orderDetail.orderStatus = OrderStatusCode.OrderClosed.valueOf();
+    orderDetail.flightStatus = FlightStatusCode.OnTime.valueOf();
+    orderDetail.gain = 0;
+    orderDetail.maxBenefit = order.maxBenefit;
+    orderDetail.premium = order.premium;
+    orderDetail.flightContractId = order.flightContractId;
+    orderDetail.oracleContractId = order.oracleContractId;
+    return orderDetail;
+  }
+
   @Query(_ => OrdersByBuyerEmailResponse, {
     description: "read orders of a buyer"
   })
   public async getClosedOrdersByBuyerEmail(
     @Args(_ => OrdersByBuyerEmailRequest)
     input: OrdersByBuyerEmailRequest,
-    @Ctx() { model }: IContext
+    @Ctx() { model, headers }: IContext
   ): Promise<OrdersByBuyerEmailResponse> {
     const response = new OrdersByBuyerEmailResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
+
+    try {
+      const jwtVerified = await jwt.verify(
+        headers["x-access-token"],
+        SECRET_KEY
+      );
+
+      if (jwtVerified.email !== input.buyerEmail) {
+        const orderDetails = new OrderDetails();
+        orderDetails.orderDetails = [];
+        response.result = orderDetails;
+        orderDetails.code = OrderDetailsCode.UserNotMatch.valueOf();
+        orderDetails.message = " Can Not Get Other's Order History !";
+
+        return response;
+      }
+    } catch (e) {
+      const orderDetails = new OrderDetails();
+      orderDetails.orderDetails = [];
+      response.result = orderDetails;
+      orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
+      orderDetails.message = "";
+
+      if (e.name === "TokenExpiredError") {
+        response.code = StatusCode.TokenExpired.valueOf();
+        response.message = "token expired";
+      } else {
+        // return server internal error
+        response.code = StatusCode.InternalServerError.valueOf();
+        response.message = e.message;
+      }
+
+      return response;
+    }
 
     try {
       const res = await model.user.findUser(input.buyerEmail);
@@ -899,31 +967,9 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       }
 
       for (const order of orders) {
-        const orderDetail = new OrderDetail();
-        orderDetail.airlineCode = order.airlineCode;
-        orderDetail.flightNumber = order.flightNumber;
-        orderDetail.srcAirport =
-          flightsSearch[order.airlineCode + order.flightNumber].srcAirport;
-        orderDetail.dstAirport =
-          flightsSearch[order.airlineCode + order.flightNumber].dstAirport;
-        orderDetail.date = order.date;
-        orderDetail.sellerEmail = order.sellerEmail;
-        orderDetail.buyerEmail = order.buyerEmail;
-        orderDetail.scheduleTakeOff = order.scheduleTakeOff;
-        orderDetail.contractAddress = order.contractAddress;
-        orderDetail.creatorAddress = order.creatorAddress;
-        orderDetail.buyerAddress = order.buyerAddress;
-        orderDetail.platformAddress = order.platformAddress;
-        orderDetail.oracleAddress = order.oracleAddress;
-        orderDetail.orderStatus = OrderStatusCode.OrderClosed.valueOf();
-        orderDetail.flightStatus = FlightStatusCode.OnTime.valueOf();
-        orderDetail.gain = 0;
-        orderDetail.maxBenefit = order.maxBenefit;
-        orderDetail.premium = order.premium;
-        orderDetail.flightContractId = order.flightContractId;
-        orderDetail.oracleContractId = order.oracleContractId;
-
-        response.result.orderDetails.push(orderDetail);
+        response.result.orderDetails.push(
+          this.orderToOrderDetail(flightsSearch, order)
+        );
       }
       response.result.total = response.result.orderDetails.length;
 
@@ -946,11 +992,45 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   public async getPendingOrdersByBuyerEmail(
     @Args(_ => PendingOrdersByBuyerEmailRequest)
     input: PendingOrdersByBuyerEmailRequest,
-    @Ctx() { model }: IContext
+    @Ctx() { model, headers }: IContext
   ): Promise<OrdersByBuyerEmailResponse> {
     const response = new OrdersByBuyerEmailResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
+
+    try {
+      const jwtVerified = await jwt.verify(
+        headers["x-access-token"],
+        SECRET_KEY
+      );
+
+      if (jwtVerified.email !== input.buyerEmail) {
+        const orderDetails = new OrderDetails();
+        orderDetails.orderDetails = [];
+        response.result = orderDetails;
+        orderDetails.code = OrderDetailsCode.UserNotMatch.valueOf();
+        orderDetails.message = " Can Not Get Other's Order History !";
+
+        return response;
+      }
+    } catch (e) {
+      const orderDetails = new OrderDetails();
+      orderDetails.orderDetails = [];
+      response.result = orderDetails;
+      orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
+      orderDetails.message = "";
+
+      if (e.name === "TokenExpiredError") {
+        response.code = StatusCode.TokenExpired.valueOf();
+        response.message = "token expired";
+      } else {
+        // return server internal error
+        response.code = StatusCode.InternalServerError.valueOf();
+        response.message = e.message;
+      }
+
+      return response;
+    }
 
     try {
       const res = await model.user.findUser(input.buyerEmail);
@@ -983,31 +1063,9 @@ export class FlightsResolver implements ResolverInterface<() => String> {
           continue;
         }
 
-        const orderDetail = new OrderDetail();
-        orderDetail.airlineCode = order.airlineCode;
-        orderDetail.flightNumber = order.flightNumber;
-        orderDetail.srcAirport =
-          flightsSearch[order.airlineCode + order.flightNumber].srcAirport;
-        orderDetail.dstAirport =
-          flightsSearch[order.airlineCode + order.flightNumber].dstAirport;
-        orderDetail.date = order.date;
-        orderDetail.sellerEmail = order.sellerEmail;
-        orderDetail.buyerEmail = order.buyerEmail;
-        orderDetail.scheduleTakeOff = order.scheduleTakeOff;
-        orderDetail.contractAddress = order.contractAddress;
-        orderDetail.creatorAddress = order.creatorAddress;
-        orderDetail.buyerAddress = order.buyerAddress;
-        orderDetail.platformAddress = order.platformAddress;
-        orderDetail.oracleAddress = order.oracleAddress;
-        orderDetail.orderStatus = contractStatus.valueOf();
-        orderDetail.flightStatus = FlightStatusCode.Unknown.valueOf();
-        orderDetail.gain = 0;
-        orderDetail.maxBenefit = order.maxBenefit;
-        orderDetail.premium = order.premium;
-        orderDetail.flightContractId = order.flightContractId;
-        orderDetail.oracleContractId = order.oracleContractId;
-
-        response.result.orderDetails.push(orderDetail);
+        response.result.orderDetails.push(
+          this.orderToOrderDetail(flightsSearch, order)
+        );
       }
       response.result.total = response.result.orderDetails.length;
 

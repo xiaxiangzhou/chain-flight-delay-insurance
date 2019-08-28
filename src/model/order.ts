@@ -26,7 +26,7 @@ type IOrder = {
   oracleContractId: object;
 };
 
-type IOrderDoc = mongoose.Document &
+export type IOrderDoc = mongoose.Document &
   IOrder & {
     createAt: Date;
     updateAt: Date;
