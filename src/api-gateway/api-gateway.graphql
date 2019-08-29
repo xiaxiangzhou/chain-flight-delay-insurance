@@ -476,6 +476,20 @@ type OrdersByBuyerEmailResponse {
   result: OrderDetails!
 }
 
+type PendingOrderDetails {
+  code: Float!
+  message: String!
+  haveClosedOrders: Boolean!
+  total: Float!
+  orderDetails: [OrderDetail!]
+}
+
+type PendingOrdersByBuyerEmailResponse {
+  code: Float!
+  message: String!
+  result: PendingOrderDetails!
+}
+
 type PlumChallengeExit {
   subChainAddress: String!
   coinID: Int!
@@ -736,7 +750,9 @@ type Query {
   ): OrdersByBuyerEmailResponse!
 
   # read orders of a buyer
-  getPendingOrdersByBuyerEmail(buyerEmail: String!): OrdersByBuyerEmailResponse!
+  getPendingOrdersByBuyerEmail(
+    buyerEmail: String!
+  ): PendingOrdersByBuyerEmailResponse!
 
   # buy contract
   buyContract(

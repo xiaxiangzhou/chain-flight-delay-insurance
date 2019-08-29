@@ -433,6 +433,24 @@ export class OrderDetails {
 }
 
 @ObjectType()
+export class PendingOrderDetails {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => Boolean)
+  public haveClosedOrders: boolean;
+
+  @Field(_ => Number)
+  public total: number;
+
+  @Field(_ => [OrderDetail], { nullable: true })
+  public orderDetails: Array<OrderDetail>;
+}
+
+@ObjectType()
 export class OrdersByBuyerEmailResponse {
   @Field(_ => Number)
   public code: number;
@@ -442,6 +460,18 @@ export class OrdersByBuyerEmailResponse {
 
   @Field(_ => OrderDetails)
   public result: OrderDetails;
+}
+
+@ObjectType()
+export class PendingOrdersByBuyerEmailResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => PendingOrderDetails)
+  public result: PendingOrderDetails;
 }
 
 @ArgsType()
@@ -986,15 +1016,15 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     }
   }
 
-  @Query(_ => OrdersByBuyerEmailResponse, {
+  @Query(_ => PendingOrdersByBuyerEmailResponse, {
     description: "read orders of a buyer"
   })
   public async getPendingOrdersByBuyerEmail(
     @Args(_ => PendingOrdersByBuyerEmailRequest)
     input: PendingOrdersByBuyerEmailRequest,
     @Ctx() { model, headers }: IContext
-  ): Promise<OrdersByBuyerEmailResponse> {
-    const response = new OrdersByBuyerEmailResponse();
+  ): Promise<PendingOrdersByBuyerEmailResponse> {
+    const response = new PendingOrdersByBuyerEmailResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
 
@@ -1005,20 +1035,22 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       );
 
       if (jwtVerified.email !== input.buyerEmail) {
-        const orderDetails = new OrderDetails();
+        const orderDetails = new PendingOrderDetails();
         orderDetails.orderDetails = [];
         response.result = orderDetails;
         orderDetails.code = OrderDetailsCode.UserNotMatch.valueOf();
         orderDetails.message = " Can Not Get Other's Order History !";
+        orderDetails.haveClosedOrders = false;
 
         return response;
       }
     } catch (e) {
-      const orderDetails = new OrderDetails();
+      const orderDetails = new PendingOrderDetails();
       orderDetails.orderDetails = [];
       response.result = orderDetails;
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "";
+      orderDetails.haveClosedOrders = false;
 
       if (e.name === "TokenExpiredError") {
         response.code = StatusCode.TokenExpired.valueOf();
@@ -1028,19 +1060,19 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         response.code = StatusCode.InternalServerError.valueOf();
         response.message = e.message;
       }
-
       return response;
     }
 
     try {
       const res = await model.user.findUser(input.buyerEmail);
-      const orderDetails = new OrderDetails();
+      const orderDetails = new PendingOrderDetails();
       orderDetails.orderDetails = [];
       response.result = orderDetails;
 
       if (res.length === 0) {
         orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
         orderDetails.message = "User Not Found !";
+        orderDetails.haveClosedOrders = false;
         return response;
       }
 
@@ -1055,6 +1087,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         flightsSearch[flight.airlineCode + flight.flightNumber] = flight;
       }
 
+      const fakeOpen = 0;
       for (const order of orders) {
         // get status from contract
         const contractStatus = OrderStatusCode.WaitToFly;
@@ -1071,13 +1104,22 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
       orderDetails.code = OrderDetailsCode.Success.valueOf();
       orderDetails.message = "";
+
+      if (
+        fakeOpen === 0 &&
+        model.order.getClosedOrdersCountByBuyerEmail(input.buyerEmail) === 0
+      ) {
+        orderDetails.haveClosedOrders = false;
+      } else {
+        orderDetails.haveClosedOrders = true;
+      }
       return response;
     } catch (e) {
-      const orderDetails = new OrderDetails();
+      const orderDetails = new PendingOrderDetails();
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "Internal Server Error !";
       response.result = orderDetails;
-
+      orderDetails.haveClosedOrders = false;
       return response;
     }
   }

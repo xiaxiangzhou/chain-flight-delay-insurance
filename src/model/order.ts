@@ -175,12 +175,18 @@ export class OrderModel {
       .limit(pageSize);
   }
 
+  public getClosedOrdersCountByBuyerEmail(
+    buyerEmail: string
+  ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
+    return this.Model.count({ buyerEmail: buyerEmail, orderStatus: 3 });
+  }
+
   public getOrdersByBuyerEmailByOrderStatus(
     buyerEmail: string,
     orderStatus: number,
     startPoint: number,
     pageSize: number
-  ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
+  ): number {
     return this.Model.find({ buyerEmail: buyerEmail, orderStatus: orderStatus })
       .sort({ scheduleTakeOff: -1 })
       .skip(startPoint)
