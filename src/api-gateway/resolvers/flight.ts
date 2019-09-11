@@ -1,5 +1,10 @@
 // tslint:disable:no-any
+// tslint:disable:max-func-body-length
 // @ts-ignore
+import { ClientResponse } from "@sendgrid/client/src/response";
+import { Account } from "iotex-antenna/lib/account/account";
+import { Contract } from "iotex-antenna/lib/contract/contract";
+import RpcMethod from "iotex-antenna/lib/rpc-method/node-rpc-method";
 import * as jwt from "jsonwebtoken";
 import {
   Args,
@@ -20,6 +25,12 @@ import { IOrderDoc } from "../../model/order";
 export interface IContext {
   model: Model;
   headers: { [id: string]: string };
+  gateways: {
+    antenna: RpcMethod;
+    sendgrid: {
+      addSubscription(email: string): Promise<[ClientResponse, any]>;
+    };
+  };
 }
 
 /*const SUPPORTED_AIRLINE_CODE = [
@@ -37,6 +48,11 @@ export interface IContext {
 ];*/
 
 const WEI_TO_ETHER = 1000000000000000000;
+const CONTRACT_NAME = "one";
+const TESTNET_ADDRESS = "api.testnet.iotex.one:80";
+const RPC_TIMEOUT = 10000;
+const ADMIN_PK =
+  "7a90c8bb40be77f6328e3eb9b02012a8ba9eda206f248ab16df7bdc32b838bf4";
 export const SECRET_KEY =
   "88E33784A3CBA2D17820C6F3991839FA7ECD90BFFDE675E09C83E86344780A4E";
 
@@ -894,7 +910,9 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
   private orderToOrderDetail(
     flightsSearch: { [id: string]: IFlightDoc },
-    order: IOrderDoc
+    order: IOrderDoc,
+    orderStatus: number,
+    flightStatus: number
   ): OrderDetail {
     const orderDetail = new OrderDetail();
     orderDetail.airlineCode = order.airlineCode;
@@ -912,8 +930,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     orderDetail.buyerAddress = order.buyerAddress;
     orderDetail.platformAddress = order.platformAddress;
     orderDetail.oracleAddress = order.oracleAddress;
-    orderDetail.orderStatus = OrderStatusCode.OrderClosed.valueOf();
-    orderDetail.flightStatus = FlightStatusCode.OnTime.valueOf();
+    orderDetail.orderStatus = orderStatus;
+    orderDetail.flightStatus = flightStatus;
     orderDetail.gain = 0;
     orderDetail.maxBenefit = order.maxBenefit;
     orderDetail.premium = order.premium;
@@ -986,10 +1004,6 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         flightsSearch[flight.airlineCode + flight.flightNumber] = flight;
       }
 
-      // not status specific
-      /*let pendingOrders = await model.order.getPendingOrdersByBuyerEmail(
-        input.buyerEmail
-      );*/
       const closedOnesInPending = [];
 
       let orders = [];
@@ -1006,9 +1020,28 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         );
       }
 
+      const contract = await model.contract.getContractByName(CONTRACT_NAME);
+      const client = new RpcMethod(TESTNET_ADDRESS, { timeout: RPC_TIMEOUT });
+      const adminSender = Account.fromPrivateKey(ADMIN_PK);
+
       for (const order of orders) {
+        const cont = new Contract(
+          JSON.parse(contract.abi),
+          order.contractAddress,
+          { provider: client }
+        );
+        const flightStatus = await cont.methods.flightStatus({
+          account: adminSender,
+          gasLimit: "1000000",
+          gasPrice: "1000000000000"
+        });
         response.result.orderDetails.push(
-          this.orderToOrderDetail(flightsSearch, order)
+          this.orderToOrderDetail(
+            flightsSearch,
+            order,
+            OrderStatusCode.OrderClosed.valueOf(),
+            flightStatus.toNumber()
+          )
         );
       }
       response.result.total = response.result.orderDetails.length;
@@ -1032,7 +1065,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   public async getPendingOrdersByBuyerEmail(
     @Args(_ => PendingOrdersByBuyerEmailRequest)
     input: PendingOrdersByBuyerEmailRequest,
-    @Ctx() { model, headers }: IContext
+    @Ctx() { model, headers, gateways }: IContext
   ): Promise<PendingOrdersByBuyerEmailResponse> {
     const response = new PendingOrdersByBuyerEmailResponse();
     response.code = StatusCode.Success.valueOf();
@@ -1097,6 +1130,10 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         flightsSearch[flight.airlineCode + flight.flightNumber] = flight;
       }
 
+      const contract = await model.contract.getContractByName(CONTRACT_NAME);
+      const client = new RpcMethod(TESTNET_ADDRESS, { timeout: RPC_TIMEOUT });
+      const adminSender = Account.fromPrivateKey(ADMIN_PK);
+
       const fakeOpen = 0;
       for (const order of orders) {
         // get status from contract
@@ -1106,8 +1143,29 @@ export class FlightsResolver implements ResolverInterface<() => String> {
           continue;
         }
 
+        const cont = new Contract(
+          JSON.parse(contract.abi),
+          order.contractAddress,
+          { provider: client }
+        );
+        const orderStatus = await cont.methods.contractStatus({
+          account: adminSender,
+          gasLimit: "1000000",
+          gasPrice: "1000000000000"
+        });
+        const flightStatus = await cont.methods.flightStatus({
+          account: adminSender,
+          gasLimit: "1000000",
+          gasPrice: "1000000000000"
+        });
+
         response.result.orderDetails.push(
-          this.orderToOrderDetail(flightsSearch, order)
+          this.orderToOrderDetail(
+            flightsSearch,
+            order,
+            orderStatus.toNumber(),
+            flightStatus.toNumber()
+          )
         );
       }
       response.result.total = response.result.orderDetails.length;
@@ -1128,6 +1186,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       const orderDetails = new PendingOrderDetails();
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "Internal Server Error !";
+      orderDetails.total = 0;
       response.result = orderDetails;
       orderDetails.haveClosedOrders = false;
       return response;
@@ -1186,8 +1245,6 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     response.code = StatusCode.Success.valueOf();
     response.message = "";
 
-    //let contractId = "one";
-
     try {
       const res = await model.contract.getContract(input.id);
       const contractDetail = new ContractDetail();
@@ -1231,10 +1288,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     response.code = StatusCode.Success.valueOf();
     response.message = "";
 
-    const contractName = "one";
-
     try {
-      const res = await model.contract.getContractByName(contractName);
+      const res = await model.contract.getContractByName(CONTRACT_NAME);
       const contractConfig = new ContractConfig();
       contractConfig.contractName = res.name;
       contractConfig.contractAbi = res.abi;
