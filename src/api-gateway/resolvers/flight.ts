@@ -1,10 +1,12 @@
 // tslint:disable:no-any
+// tslint:disable:no-empty
 // tslint:disable:max-func-body-length
 // @ts-ignore
 import { ClientResponse } from "@sendgrid/client/src/response";
 import { Account } from "iotex-antenna/lib/account/account";
 import { Contract } from "iotex-antenna/lib/contract/contract";
 import RpcMethod from "iotex-antenna/lib/rpc-method/node-rpc-method";
+// @ts-ignore
 import * as jwt from "jsonwebtoken";
 import {
   Args,
@@ -342,7 +344,8 @@ export enum OrderStatusCode {
   WaitToFly,
   OrderProcessing,
   StatusReported,
-  OrderClosed
+  OrderClosed,
+  StatusUnknown
 }
 
 export enum FlightStatusCode {
@@ -1025,22 +1028,27 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       const adminSender = Account.fromPrivateKey(ADMIN_PK);
 
       for (const order of orders) {
-        const cont = new Contract(
-          JSON.parse(contract.abi),
-          order.contractAddress,
-          { provider: client }
-        );
-        const flightStatus = await cont.methods.flightStatus({
-          account: adminSender,
-          gasLimit: "1000000",
-          gasPrice: "1000000000000"
-        });
+        let flightStatusCode = FlightStatusCode.Unknown.valueOf();
+        try {
+          const cont = new Contract(
+            JSON.parse(contract.abi),
+            order.contractAddress,
+            { provider: client }
+          );
+          const flightStatus = await cont.methods.flightStatus({
+            account: adminSender,
+            gasLimit: "1000000",
+            gasPrice: "1000000000000"
+          });
+          flightStatusCode = flightStatus.toNumber();
+        } catch (e) {}
+
         response.result.orderDetails.push(
           this.orderToOrderDetail(
             flightsSearch,
             order,
             OrderStatusCode.OrderClosed.valueOf(),
-            flightStatus.toNumber()
+            flightStatusCode
           )
         );
       }
@@ -1053,6 +1061,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       const orderDetails = new OrderDetails();
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "Internal Server Error !";
+      orderDetails.total = 0;
       response.result = orderDetails;
 
       return response;
@@ -1065,7 +1074,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   public async getPendingOrdersByBuyerEmail(
     @Args(_ => PendingOrdersByBuyerEmailRequest)
     input: PendingOrdersByBuyerEmailRequest,
-    @Ctx() { model, headers, gateways }: IContext
+    @Ctx() { model, headers }: IContext
   ): Promise<PendingOrdersByBuyerEmailResponse> {
     const response = new PendingOrdersByBuyerEmailResponse();
     response.code = StatusCode.Success.valueOf();
@@ -1136,35 +1145,41 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
       const fakeOpen = 0;
       for (const order of orders) {
-        // get status from contract
-        const contractStatus = OrderStatusCode.WaitToFly;
-        //@ts-ignore
-        if (contractStatus === OrderStatusCode.OrderClosed) {
-          continue;
-        }
+        let orderStatusCode = OrderStatusCode.StatusUnknown.valueOf();
+        let flightStatusCode = FlightStatusCode.Unknown.valueOf();
+        try {
+          const cont = new Contract(
+            JSON.parse(contract.abi),
+            order.contractAddress,
+            { provider: client }
+          );
+          const orderStatus = await cont.methods.contractStatus({
+            account: adminSender,
+            gasLimit: "1000000",
+            gasPrice: "1000000000000"
+          });
+          //@ts-ignore
+          if (
+            orderStatus.toNumber() === OrderStatusCode.OrderClosed.valueOf()
+          ) {
+            continue;
+          }
+          orderStatusCode = orderStatus.toNumber();
 
-        const cont = new Contract(
-          JSON.parse(contract.abi),
-          order.contractAddress,
-          { provider: client }
-        );
-        const orderStatus = await cont.methods.contractStatus({
-          account: adminSender,
-          gasLimit: "1000000",
-          gasPrice: "1000000000000"
-        });
-        const flightStatus = await cont.methods.flightStatus({
-          account: adminSender,
-          gasLimit: "1000000",
-          gasPrice: "1000000000000"
-        });
+          const flightStatus = await cont.methods.flightStatus({
+            account: adminSender,
+            gasLimit: "1000000",
+            gasPrice: "1000000000000"
+          });
+          flightStatusCode = flightStatus.toNumber();
+        } catch (e) {}
 
         response.result.orderDetails.push(
           this.orderToOrderDetail(
             flightsSearch,
             order,
-            orderStatus.toNumber(),
-            flightStatus.toNumber()
+            orderStatusCode,
+            flightStatusCode
           )
         );
       }
