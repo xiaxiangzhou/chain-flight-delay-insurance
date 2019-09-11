@@ -203,14 +203,16 @@ export class OrderModel {
 
   public getAvailableOrdersByFlight(
     airlineCode: string,
-    flightNumber: number
+    flightNumber: number,
+    currentDate: string
   ): mongoose.AggregationCursor {
     return this.Model.collection.aggregate([
       {
         $match: {
           airlineCode: airlineCode,
           flightNumber: flightNumber,
-          orderStatus: 0
+          orderStatus: 0,
+          date: { $gt: currentDate }
         }
       },
       {

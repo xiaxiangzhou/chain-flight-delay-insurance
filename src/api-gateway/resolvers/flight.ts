@@ -624,11 +624,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     /*await model.order.upsertOrder(
       "AS",
       345,
-      "2019-08-28",
+      "2020-01-05",
       "",
       "",
-      1566994980,
-      "io1t3269txauf9svqcvz3znnea5hvvvpnfadx65cm",
+      1578225378,
+      "io1xwj28qfl5mj7daskntmdnxm9w2l3k5m3r36hag",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
       "",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
@@ -714,6 +714,15 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     return response;
   }
 
+  private currentDate(): string {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, "0");
+    const mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+    const yyyy = today.getFullYear();
+
+    return `${yyyy.toString()}-${mm}-${dd}`;
+  }
+
   @Query(_ => AvailableOrdersResponse, {
     description: "read available flight orders"
   })
@@ -724,7 +733,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   ): Promise<AvailableOrdersResponse> {
     const cursor = await model.order.getAvailableOrdersByFlight(
       input.airlineCode,
-      input.flightNumber
+      input.flightNumber,
+      this.currentDate()
     );
 
     const availableOrdersList = new AvailableOrdersList();
