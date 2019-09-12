@@ -435,14 +435,15 @@ export class UserResolver implements ResolverInterface<() => String> {
             `smtps://${configEmail}:${configPassword}@smtp.gmail.com`
           );
 
+          // If you are viewing this mail from a Android Device click this <a href="http://learn2crack/${random}">link</a>.
           const mailOptions = {
             from: `"${configName}" <${configEmail}>`,
             to: user.email,
             subject: "Reset Password Request ",
             html: `Hello,
 
-    			      Your reset password token is <b>${random}</b>. 
-    			  If you are viewing this mail from a Android Device click this <a href="http://learn2crack/${random}">link</a>. 
+    			      Your Security Code is <b>${random}</b>, 
+    			  Please use this Code to reset your password. 
     			  The token is valid for only 10 minutes.
 
     			  Thanks,

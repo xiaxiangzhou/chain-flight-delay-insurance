@@ -1166,7 +1166,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
           }
 
           if (orderStatus.toNumber() === 1) {
-            let tcSeconds = new Date().getTime() / 1000;
+            const tcSeconds = new Date().getTime() / 1000;
             if (tcSeconds < order.scheduleTakeOff) {
               orderStatusCode = OrderStatusCode.WaitToFly.valueOf();
             } else {
