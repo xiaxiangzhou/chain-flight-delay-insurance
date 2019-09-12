@@ -646,8 +646,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       "2020-01-05",
       "",
       "",
-      1578225378,
-      "io1xwj28qfl5mj7daskntmdnxm9w2l3k5m3r36hag",
+      1578263502,
+      "io1gsk7mf876mpq8kdpfjjrh0z2vj2nep27qr6ypl",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
       "",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
@@ -1158,13 +1158,24 @@ export class FlightsResolver implements ResolverInterface<() => String> {
             gasLimit: "1000000",
             gasPrice: "1000000000000"
           });
+
+          // filter outer settled and
           //@ts-ignore
-          if (
-            orderStatus.toNumber() === OrderStatusCode.OrderClosed.valueOf()
-          ) {
+          if (orderStatus.toNumber() !== 1 && orderStatus.toNumber() !== 2) {
             continue;
           }
-          orderStatusCode = orderStatus.toNumber();
+
+          if (orderStatus.toNumber() === 1) {
+            let tcSeconds = new Date().getTime() / 1000;
+            if (tcSeconds < order.scheduleTakeOff) {
+              orderStatusCode = OrderStatusCode.WaitToFly.valueOf();
+            } else {
+              orderStatusCode = OrderStatusCode.OrderProcessing.valueOf();
+            }
+          } else {
+            // order status is 2
+            orderStatusCode = OrderStatusCode.StatusReported.valueOf();
+          }
 
           const flightStatus = await cont.methods.flightStatus({
             account: adminSender,
