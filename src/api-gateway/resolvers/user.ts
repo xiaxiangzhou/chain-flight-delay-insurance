@@ -237,6 +237,16 @@ export class UserResolver implements ResolverInterface<() => String> {
     response.message = "";
 
     try {
+      const res = await model.user.findUser(input.email);
+      if (res.length !== 0) {
+        const userRegisterStatus = new UserRegisterStatus();
+        userRegisterStatus.code = UserRegisterCode.AlreadyRegister.valueOf();
+        userRegisterStatus.message = "User Already Registered !";
+        userRegisterStatus.token = "";
+        response.result = userRegisterStatus;
+        return response;
+      }
+
       await model.user.registerUser(input.email, input.hashedPassword);
       const token = jwt.sign({ email: input.email }, SECRET_KEY, {
         expiresIn: "365d"
