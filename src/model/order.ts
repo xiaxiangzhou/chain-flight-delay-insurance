@@ -162,7 +162,7 @@ export class OrderModel {
     return this.Model.find({ buyerEmail: buyerEmail })
       .where("orderStatus")
       .ne(3) // not closed
-      .sort({ scheduleTakeOff: -1 });
+      .sort({ scheduleTakeOff: 1 });
   }
 
   public getClosedOrdersByBuyerEmail(
