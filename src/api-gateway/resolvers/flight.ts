@@ -211,6 +211,15 @@ export class RecommandResponse {
   public result: Recommands;
 }
 
+@ArgsType()
+export class RecommandRequest {
+  @Field(_ => Number)
+  public pageNum: number;
+
+  @Field(_ => Number)
+  public pageSize: number;
+}
+
 @ObjectType()
 export class OngoingPayout {
   @Field(_ => String)
@@ -251,6 +260,15 @@ export class OngoingPayoutResponse {
 
   @Field(_ => OngoingPayouts)
   public result: OngoingPayouts;
+}
+
+@ArgsType()
+export class OngoingPayoutRequest {
+  @Field(_ => Number)
+  public pageNum: number;
+
+  @Field(_ => Number)
+  public pageSize: number;
 }
 
 @ObjectType()
@@ -643,11 +661,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     /*await model.order.upsertOrder(
       "AS",
       345,
-      "2020-01-10",
+      "2019-09-30",
       "",
       "",
-      1578681307,
-      "io1dg8253080xt7xw90yxt2sj9ngh78sfuthwt0s8",
+      1569827465,
+      "io1p93lh5p5835g9l2tr6w6wat8pea497nqjtcfm9",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
       "",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
@@ -808,78 +826,86 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   }
 
   @Query(_ => RecommandResponse, { description: "recommand some flights" })
-  public async getRecommandation(@Ctx() { model }: IContext): Promise<
-    RecommandResponse
-  > {
+  public async getRecommandation(
+    @Args(_ => RecommandRequest)
+    input: RecommandRequest,
+    @Ctx() { model }: IContext
+  ): Promise<RecommandResponse> {
     //await model.recommandation.upsertRecommandation("AS", 345, 5000000000000000000, 10000000000000000000);
-
-    const rows = await model.recommandation.getRecommandations();
-
     const response = new RecommandResponse();
     const recommands = new Recommands();
     recommands.recommands = [];
-    for (const row of rows) {
-      const recommand = new Recommand();
-      recommand.airLineCode = row.airlineCode;
-      recommand.flightNumber = row.flightNumber;
-      recommand.premium = row.premium / WEI_TO_ETHER;
-      recommand.maxBenefit = row.maxBenefit / WEI_TO_ETHER;
-      recommands.recommands.push(recommand);
-    }
+    try {
+      const startPoint = input.pageNum * input.pageSize;
+      const rows = await model.recommandation.getRecommandations(
+        startPoint,
+        input.pageSize
+      );
 
-    response.code = StatusCode.Success.valueOf();
-    response.message = "";
+      for (const row of rows) {
+        const recommand = new Recommand();
+        recommand.airLineCode = row.airlineCode;
+        recommand.flightNumber = row.flightNumber;
+        recommand.premium = row.premium / WEI_TO_ETHER;
+        recommand.maxBenefit = row.maxBenefit / WEI_TO_ETHER;
+        recommands.recommands.push(recommand);
+      }
+
+      response.code = StatusCode.Success.valueOf();
+      response.message = "";
+    } catch (e) {
+      response.code = StatusCode.InternalServerError.valueOf();
+      response.message = "";
+    }
     response.result = recommands;
 
     return response;
   }
 
   @Query(_ => OngoingPayoutResponse, { description: "ongoing payouts" })
-  public async getOngoingPayouts(): Promise<OngoingPayoutResponse> {
-    //return gateways.antenna.readContract(input);
+  public async getOngoingPayouts(
+    @Args(_ => OngoingPayoutRequest)
+    input: OngoingPayoutRequest,
+    @Ctx() { model }: IContext
+  ): Promise<OngoingPayoutResponse> {
+    /*await model.payout.upsertPayout(
+      'io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v',
+      'io1gspr9qjfx0qck5javv2t25zydtduk76jf9d0l9',
+      'AS',
+      345,
+      1578681307,
+      1578681307 + SECONDS_IN_DAY * 4,
+      10
+    );*/
 
+    const startPoint = input.pageNum * input.pageSize;
     const response = new OngoingPayoutResponse();
-    const payout1 = new OngoingPayout();
-    payout1.buyerAddress = "xxxxxxxxxxx1";
-    payout1.contractAddress = "yyyyyyyyyyy1";
-    payout1.airlineCode = "UA";
-    payout1.flightNumber = 312;
-    payout1.scheduleTakeOff = 1564145593;
-    payout1.payTime = 1564385593;
-    payout1.pay = 250;
-
-    const payout2 = new OngoingPayout();
-    payout2.buyerAddress = "xxxxxxxxxxx2";
-    payout2.contractAddress = "yyyyyyyyyyy2";
-    payout2.airlineCode = "AA";
-    payout2.flightNumber = 234;
-    payout2.scheduleTakeOff = 1564135593;
-    payout2.payTime = 1564375593;
-    payout2.pay = 200;
-
-    const payout3 = new OngoingPayout();
-    payout3.buyerAddress = "xxxxxxxxxxx3";
-    payout3.contractAddress = "yyyyyyyyyyy3";
-    payout3.airlineCode = "DL";
-    payout3.flightNumber = 1312;
-    payout3.scheduleTakeOff = 1554145593;
-    payout3.payTime = 1554385593;
-    payout3.pay = 400;
-
-    const payout4 = new OngoingPayout();
-    payout4.buyerAddress = "xxxxxxxxxxx4";
-    payout4.contractAddress = "yyyyyyyyyyy4";
-    payout4.airlineCode = "AA";
-    payout4.flightNumber = 789;
-    payout4.scheduleTakeOff = 1564143593;
-    payout4.payTime = 1564383593;
-    payout4.pay = 198;
-
     const payouts = new OngoingPayouts();
-    payouts.payouts = [payout1, payout2, payout3, payout4];
+    payouts.payouts = [];
+    try {
+      const rawPayouts = await model.payout.getPayout(
+        startPoint,
+        input.pageSize
+      );
 
-    response.code = StatusCode.Success.valueOf();
-    response.message = "";
+      for (const rawPayout of rawPayouts) {
+        const payout = new OngoingPayout();
+        payout.buyerAddress = rawPayout.buyerAddress;
+        payout.contractAddress = rawPayout.contractAddress;
+        payout.airlineCode = rawPayout.airlineCode;
+        payout.flightNumber = rawPayout.flightNumber;
+        payout.scheduleTakeOff = rawPayout.scheduleTakeOff;
+        payout.payTime = rawPayout.payTime;
+        payout.pay = rawPayout.pay;
+        payouts.payouts.push(payout);
+      }
+
+      response.code = StatusCode.Success.valueOf();
+      response.message = "";
+    } catch (e) {
+      response.code = StatusCode.InternalServerError.valueOf();
+      response.message = "";
+    }
     response.result = payouts;
 
     return response;

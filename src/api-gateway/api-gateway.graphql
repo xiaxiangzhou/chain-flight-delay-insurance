@@ -734,10 +734,10 @@ type Query {
   getPolicy: PolicyResponse!
 
   # recommand some flights
-  getRecommandation: RecommandResponse!
+  getRecommandation(pageNum: Float!, pageSize: Float!): RecommandResponse!
 
   # ongoing payouts
-  getOngoingPayouts: OngoingPayoutResponse!
+  getOngoingPayouts(pageNum: Float!, pageSize: Float!): OngoingPayoutResponse!
 
   # read supported flights
   getSupportedFlights: SupportedFlightsResponse!

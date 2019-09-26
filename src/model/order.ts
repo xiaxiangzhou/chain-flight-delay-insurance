@@ -2,6 +2,7 @@
 import mongoose, { DocumentQuery } from "mongoose";
 
 const Schema = mongoose.Schema;
+export const SECONDS_IN_DAY = 86400;
 
 type Opts = {
   mongoose: mongoose.Mongoose;
@@ -198,7 +199,14 @@ export class OrderModel {
     flightNumber: number,
     date: string
   ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
-    return this.Model.find({ airlineCode, flightNumber, date, orderStatus: 0 });
+    const currentTimestamp = Date.now() / 1000;
+    return this.Model.find({
+      airlineCode,
+      flightNumber,
+      date,
+      orderStatus: 0,
+      scheduleTakeOff: { $gte: currentTimestamp + SECONDS_IN_DAY }
+    });
   }
 
   public getAvailableOrdersByFlight(
@@ -206,13 +214,15 @@ export class OrderModel {
     flightNumber: number,
     currentDate: string
   ): mongoose.AggregationCursor {
+    const currentTimestamp = Date.now() / 1000;
     return this.Model.collection.aggregate([
       {
         $match: {
           airlineCode: airlineCode,
           flightNumber: flightNumber,
           orderStatus: 0,
-          date: { $gt: currentDate }
+          date: { $gt: currentDate },
+          scheduleTakeOff: { $gte: currentTimestamp + SECONDS_IN_DAY }
         }
       },
       {

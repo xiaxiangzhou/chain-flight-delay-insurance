@@ -3,6 +3,7 @@ import { MyServer } from "../server/start-server";
 import { ContractModel } from "./contract";
 import { FlightModel } from "./flight";
 import { OrderModel } from "./order";
+import { PayoutModel } from "./payout";
 import { RecommandationModel } from "./recommandation";
 import { UserModel } from "./user";
 
@@ -11,6 +12,7 @@ export type Model = {
   flight: FlightModel;
   order: OrderModel;
   recommandation: RecommandationModel;
+  payout: PayoutModel;
   contract: ContractModel;
 };
 
@@ -21,5 +23,6 @@ export function setModel(server: MyServer): void {
   server.model.flight = new FlightModel(server.gateways);
   server.model.order = new OrderModel(server.gateways);
   server.model.recommandation = new RecommandationModel(server.gateways);
+  server.model.payout = new PayoutModel(server.gateways);
   server.model.contract = new ContractModel(server.gateways);
 }

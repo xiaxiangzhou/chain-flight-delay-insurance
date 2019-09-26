@@ -62,10 +62,12 @@ export class RecommandationModel {
     );
   }
 
-  public getRecommandations(): DocumentQuery<
-    Array<IRecommandationDoc>,
-    IRecommandationDoc
-  > {
-    return this.Model.find();
+  public getRecommandations(
+    startPoint: number,
+    pageSize: number
+  ): DocumentQuery<Array<IRecommandationDoc>, IRecommandationDoc> {
+    return this.Model.find()
+      .skip(startPoint)
+      .limit(pageSize);
   }
 }
