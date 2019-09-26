@@ -195,6 +195,9 @@ export class Recommand {
 
 @ObjectType()
 export class Recommands {
+  @Field(_ => Number)
+  public total: number;
+
   @Field(_ => [Recommand], { nullable: true })
   public recommands: Array<Recommand>;
 }
@@ -246,6 +249,9 @@ export class OngoingPayout {
 
 @ObjectType()
 export class OngoingPayouts {
+  @Field(_ => Number)
+  public total: number;
+
   @Field(_ => [OngoingPayout], { nullable: true })
   public payouts: Array<OngoingPayout>;
 }
@@ -836,6 +842,9 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     const recommands = new Recommands();
     recommands.recommands = [];
     try {
+      const count = await model.recommandation.countRecommandations();
+      recommands.total = count;
+
       const startPoint = input.pageNum * input.pageSize;
       const rows = await model.recommandation.getRecommandations(
         startPoint,
@@ -883,6 +892,9 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     const payouts = new OngoingPayouts();
     payouts.payouts = [];
     try {
+      const count = await model.payout.countPayouts();
+      payouts.total = count;
+
       const rawPayouts = await model.payout.getPayout(
         startPoint,
         input.pageSize

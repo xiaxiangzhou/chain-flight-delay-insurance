@@ -70,4 +70,11 @@ export class RecommandationModel {
       .skip(startPoint)
       .limit(pageSize);
   }
+
+  public countRecommandations(): DocumentQuery<
+    Array<IRecommandationDoc>,
+    IRecommandationDoc
+  > {
+    return this.Model.count();
+  }
 }

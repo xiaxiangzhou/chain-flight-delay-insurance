@@ -431,6 +431,7 @@ type OngoingPayoutResponse {
 }
 
 type OngoingPayouts {
+  total: Float!
   payouts: [OngoingPayout!]
 }
 
@@ -829,6 +830,7 @@ type RecommandResponse {
 }
 
 type Recommands {
+  total: Float!
   recommands: [Recommand!]
 }
 

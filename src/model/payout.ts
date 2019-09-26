@@ -94,4 +94,8 @@ export class PayoutModel {
       .skip(startPoint)
       .limit(pageSize);
   }
+
+  public countPayouts(): DocumentQuery<Array<IPayoutDoc>, IPayoutDoc> {
+    return this.Model.count();
+  }
 }
