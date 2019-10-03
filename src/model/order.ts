@@ -211,8 +211,7 @@ export class OrderModel {
 
   public getAvailableOrdersByFlight(
     airlineCode: string,
-    flightNumber: number,
-    currentDate: string
+    flightNumber: number
   ): mongoose.AggregationCursor {
     const currentTimestamp = Date.now() / 1000;
     return this.Model.collection.aggregate([
@@ -221,7 +220,6 @@ export class OrderModel {
           airlineCode: airlineCode,
           flightNumber: flightNumber,
           orderStatus: 0,
-          date: { $gt: currentDate },
           scheduleTakeOff: { $gte: currentTimestamp + SECONDS_IN_DAY }
         }
       },
