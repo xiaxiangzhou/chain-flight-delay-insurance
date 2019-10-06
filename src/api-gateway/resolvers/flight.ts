@@ -560,7 +560,7 @@ export class ContractDetail {
 }
 
 @ObjectType()
-export class ContractByIdResponse {
+export class ContractByNameResponse {
   @Field(_ => Number)
   public code: number;
 
@@ -610,9 +610,9 @@ export class ContractConfigResponse {
 }
 
 @ArgsType()
-export class ContractByIdRequest {
+export class ContractByNameRequest {
   @Field(_ => String)
-  public id: string;
+  public name: string;
 }
 
 export enum BuyContractCode {
@@ -1296,20 +1296,20 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     }
   }
 
-  @Query(_ => ContractByIdResponse, {
+  @Query(_ => ContractByNameResponse, {
     description: "read contract from id"
   })
-  public async getContractById(
-    @Args(_ => ContractByIdRequest)
-    input: ContractByIdRequest,
+  public async getContractByName(
+    @Args(_ => ContractByNameRequest)
+    input: ContractByNameRequest,
     @Ctx() { model }: IContext
-  ): Promise<ContractByIdResponse> {
-    const response = new ContractByIdResponse();
+  ): Promise<ContractByNameResponse> {
+    const response = new ContractByNameResponse();
     response.code = StatusCode.Success.valueOf();
     response.message = "";
 
     try {
-      const res = await model.contract.getContract(input.id);
+      const res = await model.contract.getContractByName(input.name);
       const contractDetail = new ContractDetail();
       contractDetail.name = "";
       contractDetail.abi = "";

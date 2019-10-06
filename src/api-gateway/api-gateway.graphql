@@ -204,7 +204,7 @@ type CoinPrice {
   marketCapUsd: String!
 }
 
-type ContractByIdResponse {
+type ContractByNameResponse {
   code: Float!
   message: String!
   result: ContractDetail!
@@ -762,7 +762,7 @@ type Query {
   ): BuyContractResponse!
 
   # read contract from id
-  getContractById(id: String!): ContractByIdResponse!
+  getContractByName(name: String!): ContractByNameResponse!
 
   # read contract config
   getContractConfig: ContractConfigResponse!
