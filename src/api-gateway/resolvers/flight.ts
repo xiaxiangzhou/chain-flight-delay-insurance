@@ -339,6 +339,12 @@ export class AvailableOrdersResponse {
 
 @ArgsType()
 export class FlightDetailRequest {
+  @Field(_ => String)
+  public airlineCode: string;
+
+  @Field(_ => Number)
+  public flightNumber: number;
+
   @Field(_ => Number)
   public year: number;
 
@@ -347,6 +353,15 @@ export class FlightDetailRequest {
 
   @Field(_ => Number)
   public day: number;
+}
+
+@ArgsType()
+export class AvailableOrdersRequest {
+  @Field(_ => String)
+  public airlineCode: string;
+
+  @Field(_ => Number)
+  public flightNumber: number;
 }
 
 export enum OrderStatusCode {
@@ -754,9 +769,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   @Query(_ => AvailableOrdersResponse, {
     description: "read available flight orders"
   })
-  public async getAvailableOrders(@Ctx() { model }: IContext): Promise<
-    AvailableOrdersResponse
-  > {
+  public async getAvailableOrders(
+    @Args(_ => AvailableOrdersRequest)
+    _: AvailableOrdersRequest,
+    @Ctx() { model }: IContext
+  ): Promise<AvailableOrdersResponse> {
     const cursor = await model.order.getAvailableOrders();
 
     const availableOrdersList = new AvailableOrdersList();

@@ -718,13 +718,18 @@ type Query {
 
   # read flight detail
   getFlightDetail(
+    airlineCode: String!
+    flightNumber: Float!
     year: Float!
     month: Float!
     day: Float!
   ): FlightDetailResponse!
 
   # read available flight orders
-  getAvailableOrders: AvailableOrdersResponse!
+  getAvailableOrders(
+    airlineCode: String!
+    flightNumber: Float!
+  ): AvailableOrdersResponse!
 
   # read policy
   getPolicy: PolicyResponse!
