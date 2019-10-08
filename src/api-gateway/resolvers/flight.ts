@@ -50,7 +50,7 @@ export interface IContext {
 ];*/
 
 const WEI_TO_ETHER = 1000000000000000000;
-const CONTRACT_NAME = "one";
+const CONTRACT_NAME = "two";
 const TESTNET_ADDRESS = "api.testnet.iotex.one:80";
 const RPC_TIMEOUT = 10000;
 const ADMIN_PK =
@@ -339,12 +339,6 @@ export class AvailableOrdersResponse {
 
 @ArgsType()
 export class FlightDetailRequest {
-  @Field(_ => String)
-  public airlineCode: string;
-
-  @Field(_ => Number)
-  public flightNumber: number;
-
   @Field(_ => Number)
   public year: number;
 
@@ -353,15 +347,6 @@ export class FlightDetailRequest {
 
   @Field(_ => Number)
   public day: number;
-}
-
-@ArgsType()
-export class AvailableOrdersRequest {
-  @Field(_ => String)
-  public airlineCode: string;
-
-  @Field(_ => Number)
-  public flightNumber: number;
 }
 
 export enum OrderStatusCode {
@@ -649,6 +634,12 @@ export class BuyContractRequest {
 
   @Field(_ => String)
   public buyerEmail: string;
+
+  @Field(_ => String)
+  public airlineCode: string;
+
+  @Field(_ => Number)
+  public flightNumber: number;
 }
 
 @Resolver(_ => String)
@@ -665,22 +656,20 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     @Ctx() { model }: IContext
   ): Promise<FlightDetailResponse> {
     /*await model.order.upsertOrder(
-      "AS",
-      345,
-      "2019-09-30",
+      "",
+      0,
+      "2019-10-10",
       "",
       "",
-      1569827465,
-      "io1p93lh5p5835g9l2tr6w6wat8pea497nqjtcfm9",
+      1570751940,
+      "io1g20cp3ujntslhm5n5s3mq8rv67dwfqvp3uzdgm",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
-      "",
       "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
       "io1vlctxpm5gylma07vuyt6lxhuasnsftwrvq36z5",
       0,
       10000000000000000000,
       5000000000000000000,
-      new Object("5d4a1e92325c64d24c1fae49"),
-      new Object("5d4a1e92325c64d24c1fae49"),
+      'two',
     );*/
 
     if (
@@ -715,11 +704,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       day = util.format("%d", input.day);
     }
     const date = util.format("%d-%s-%s", input.year, month, day);
-    const rows = await model.order.getAvailableOrdersByFlightAndDate(
-      input.airlineCode,
-      input.flightNumber,
-      date
-    );
+    const rows = await model.order.getAvailableOrdersByDate(date);
 
     // no order
     if (rows.length === 0) {
@@ -769,15 +754,10 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   @Query(_ => AvailableOrdersResponse, {
     description: "read available flight orders"
   })
-  public async getAvailableOrders(
-    @Args(_ => AvailableOrdersRequest)
-    input: AvailableOrdersRequest,
-    @Ctx() { model }: IContext
-  ): Promise<AvailableOrdersResponse> {
-    const cursor = await model.order.getAvailableOrdersByFlight(
-      input.airlineCode,
-      input.flightNumber
-    );
+  public async getAvailableOrders(@Ctx() { model }: IContext): Promise<
+    AvailableOrdersResponse
+  > {
+    const cursor = await model.order.getAvailableOrders();
 
     const availableOrdersList = new AvailableOrdersList();
     availableOrdersList.availableOrdersList = [];
@@ -808,12 +788,12 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     policy.traditionalMaxBenefit = 50;
     policy.unknown = 0;
     policy.ontime = 0;
-    policy.cancel = 50;
+    policy.cancel = 100;
     policy.divert = 0;
-    policy.delay0h = 0;
-    policy.delay1h = 0;
-    policy.delay2h = 0;
-    policy.delay3h = 0;
+    policy.delay0h = 12.5;
+    policy.delay1h = 16.6;
+    policy.delay2h = 33.4;
+    policy.delay3h = 50;
     policy.delay4h = 100;
     policy.delay5h = 100;
     policy.delay6h = 100;
@@ -1281,7 +1261,12 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         return response;
       }
 
-      await model.order.buyOrder(input.contractAddress, input.buyerEmail);
+      await model.order.buyOrder(
+        input.contractAddress,
+        input.buyerEmail,
+        input.airlineCode,
+        input.flightNumber
+      );
       buyContractStatus.code = BuyContractCode.Success.valueOf();
       buyContractStatus.message = "";
       response.result = buyContractStatus;

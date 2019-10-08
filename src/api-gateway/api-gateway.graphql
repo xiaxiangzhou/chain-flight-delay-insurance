@@ -718,18 +718,13 @@ type Query {
 
   # read flight detail
   getFlightDetail(
-    airlineCode: String!
-    flightNumber: Float!
     year: Float!
     month: Float!
     day: Float!
   ): FlightDetailResponse!
 
   # read available flight orders
-  getAvailableOrders(
-    airlineCode: String!
-    flightNumber: Float!
-  ): AvailableOrdersResponse!
+  getAvailableOrders: AvailableOrdersResponse!
 
   # read policy
   getPolicy: PolicyResponse!
@@ -759,6 +754,8 @@ type Query {
   buyContract(
     contractAddress: String!
     buyerEmail: String!
+    airlineCode: String!
+    flightNumber: Float!
   ): BuyContractResponse!
 
   # read contract from id

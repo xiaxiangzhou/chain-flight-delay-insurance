@@ -3,6 +3,7 @@ import mongoose, { DocumentQuery } from "mongoose";
 
 const Schema = mongoose.Schema;
 export const SECONDS_IN_DAY = 86400;
+export const TIME_WINDOW = 90;
 
 type Opts = {
   mongoose: mongoose.Mongoose;
@@ -14,17 +15,15 @@ type IOrder = {
   date: string;
   sellerEmail: string;
   buyerEmail: string;
-  scheduleTakeOff: number;
+  timestampEndOfDate: number;
   contractAddress: string;
   creatorAddress: string;
   buyerAddress: string;
-  platformAddress: string;
   oracleAddress: string;
   orderStatus: number;
   maxBenefit: number;
   premium: number;
-  flightContractId: object;
-  oracleContractId: object;
+  flightContractName: string;
 };
 
 export type IOrderDoc = mongoose.Document &
@@ -43,17 +42,15 @@ export class OrderModel {
       date: { type: String },
       sellerEmail: { type: String },
       buyerEmail: { type: String },
-      scheduleTakeOff: { type: Number },
+      timestampEndOfDate: { type: Number },
       contractAddress: { type: String },
       creatorAddress: { type: String },
       buyerAddress: { type: String },
-      platformAddress: { type: String },
       oracleAddress: { type: String },
       orderStatus: { type: Number },
       maxBenefit: { type: Number },
       premium: { type: Number },
-      flightContractId: { type: Object },
-      oracleContractId: { type: Object },
+      flightContractName: { type: String },
       createAt: { type: Date, default: Date.now },
       updateAt: { type: Date, default: Date.now }
     });
@@ -80,17 +77,15 @@ export class OrderModel {
     date: string,
     sellerEmail: string,
     buyerEmail: string,
-    scheduleTakeOff: number,
+    timestampEndOfDate: number,
     contractAddress: string,
     creatorAddress: string,
     buyerAddress: string,
-    platformAddress: string,
     oracleAddress: string,
     orderStatus: number,
     maxBenefit: number,
     premium: number,
-    flightContractId: object,
-    oracleContractId: object
+    flightContractName: string
   ): DocumentQuery<IOrderDoc | null, IOrderDoc> {
     return this.Model.findOneAndUpdate(
       {
@@ -99,17 +94,15 @@ export class OrderModel {
         date,
         sellerEmail,
         buyerEmail,
-        scheduleTakeOff,
+        timestampEndOfDate,
         contractAddress,
         creatorAddress,
         buyerAddress,
-        platformAddress,
         oracleAddress,
         orderStatus,
         maxBenefit,
         premium,
-        flightContractId,
-        oracleContractId
+        flightContractName
       },
       {
         airlineCode,
@@ -117,17 +110,15 @@ export class OrderModel {
         date,
         sellerEmail,
         buyerEmail,
-        scheduleTakeOff,
+        timestampEndOfDate,
         contractAddress,
         creatorAddress,
         buyerAddress,
-        platformAddress,
         oracleAddress,
         orderStatus,
         maxBenefit,
         premium,
-        flightContractId,
-        oracleContractId
+        flightContractName
       },
       { upsert: true, new: true }
     );
@@ -135,7 +126,9 @@ export class OrderModel {
 
   public buyOrder(
     contractAddress: string,
-    buyerEmail: string
+    buyerEmail: string,
+    airlineCode: string,
+    flightNumber: number
   ): DocumentQuery<IOrderDoc | null, IOrderDoc> {
     return this.Model.findOneAndUpdate(
       {
@@ -144,6 +137,8 @@ export class OrderModel {
       {
         buyerEmail: buyerEmail,
         contractAddress: contractAddress,
+        airlineCode: airlineCode,
+        flightNumber: flightNumber,
         orderStatus: 1
       },
       { upsert: true, new: true }
@@ -162,7 +157,7 @@ export class OrderModel {
     return this.Model.find({ buyerEmail: buyerEmail })
       .where("orderStatus")
       .ne(3) // not closed
-      .sort({ scheduleTakeOff: 1 });
+      .sort({ timestampEndOfDate: 1 });
   }
 
   public getClosedOrdersByBuyerEmail(
@@ -171,7 +166,7 @@ export class OrderModel {
     pageSize: number
   ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
     return this.Model.find({ buyerEmail: buyerEmail, orderStatus: 3 })
-      .sort({ scheduleTakeOff: -1 })
+      .sort({ timestampEndOfDate: -1 })
       .skip(startPoint)
       .limit(pageSize);
   }
@@ -189,7 +184,7 @@ export class OrderModel {
     pageSize: number
   ): number {
     return this.Model.find({ buyerEmail: buyerEmail, orderStatus: orderStatus })
-      .sort({ scheduleTakeOff: -1 })
+      .sort({ timestampEndOfDate: -1 })
       .skip(startPoint)
       .limit(pageSize);
   }
@@ -205,7 +200,18 @@ export class OrderModel {
       flightNumber,
       date,
       orderStatus: 0,
-      scheduleTakeOff: { $gte: currentTimestamp + SECONDS_IN_DAY }
+      timestampEndOfDate: { $gte: currentTimestamp + SECONDS_IN_DAY * 2 }
+    });
+  }
+
+  public getAvailableOrdersByDate(
+    date: string
+  ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
+    const currentTimestamp = Date.now() / 1000;
+    return this.Model.find({
+      date,
+      orderStatus: 0,
+      timestampEndOfDate: { $gte: currentTimestamp + SECONDS_IN_DAY * 2 }
     });
   }
 
@@ -220,7 +226,30 @@ export class OrderModel {
           airlineCode: airlineCode,
           flightNumber: flightNumber,
           orderStatus: 0,
-          scheduleTakeOff: { $gte: currentTimestamp + SECONDS_IN_DAY }
+          timestampEndOfDate: { $gte: currentTimestamp + SECONDS_IN_DAY * 2 }
+        }
+      },
+      {
+        $group: {
+          _id: "$date",
+          count: {
+            $sum: 1
+          }
+        }
+      }
+    ]);
+  }
+
+  public getAvailableOrders(): mongoose.AggregationCursor {
+    const currentTimestamp = Date.now() / 1000;
+    return this.Model.collection.aggregate([
+      {
+        $match: {
+          orderStatus: 0,
+          timestampEndOfDate: {
+            $gte: currentTimestamp + SECONDS_IN_DAY * 2,
+            $lte: currentTimestamp + TIME_WINDOW * SECONDS_IN_DAY
+          }
         }
       },
       {
