@@ -642,8 +642,50 @@ export class BuyContractResponse {
   public result: BuyContractStatus;
 }
 
+export enum PrepareBuyContractCode {
+  Success,
+  AlreadyBought,
+  InternalServerError
+}
+
+@ObjectType()
+export class PrepareBuyContractStatus {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+}
+
+@ObjectType()
+export class PrepareBuyContractResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => PrepareBuyContractStatus)
+  public result: PrepareBuyContractStatus;
+}
+
 @ArgsType()
 export class BuyContractRequest {
+  @Field(_ => String)
+  public contractAddress: string;
+
+  @Field(_ => String)
+  public buyerEmail: string;
+
+  @Field(_ => String)
+  public airlineCode: string;
+
+  @Field(_ => Number)
+  public flightNumber: number;
+}
+
+@ArgsType()
+export class PrepareBuyContractRequest {
   @Field(_ => String)
   public contractAddress: string;
 
@@ -1253,6 +1295,51 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     }
   }
 
+  @Query(_ => PrepareBuyContractResponse, {
+    description: "prepare buy contract"
+  })
+  public async prepareBuyContract(
+    @Args(_ => PrepareBuyContractRequest)
+    input: PrepareBuyContractRequest,
+    @Ctx() { model }: IContext
+  ): Promise<PrepareBuyContractResponse> {
+    const response = new PrepareBuyContractResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+
+    try {
+      const prepareBuyContractStatus = new PrepareBuyContractStatus();
+      const res = await model.order.getOrderByContractAddress(
+        input.contractAddress
+      );
+
+      if (res.orderStatus !== 0) {
+        prepareBuyContractStatus.code = PrepareBuyContractCode.AlreadyBought.valueOf();
+        prepareBuyContractStatus.message = "Already Bought !";
+        response.result = prepareBuyContractStatus;
+        return response;
+      }
+
+      await model.order.prepareToBuy(
+        input.contractAddress,
+        input.buyerEmail,
+        input.airlineCode,
+        input.flightNumber
+      );
+      prepareBuyContractStatus.code = BuyContractCode.Success.valueOf();
+      prepareBuyContractStatus.message = "";
+      response.result = prepareBuyContractStatus;
+      return response;
+    } catch (e) {
+      const preapreBuyContractStatus = new PrepareBuyContractStatus();
+      preapreBuyContractStatus.code = PrepareBuyContractCode.InternalServerError.valueOf();
+      preapreBuyContractStatus.message = "Internal Server Error !";
+      response.result = preapreBuyContractStatus;
+
+      return response;
+    }
+  }
+
   @Query(_ => BuyContractResponse, {
     description: "buy contract"
   })
@@ -1271,7 +1358,12 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         input.contractAddress
       );
 
-      if (res.buyerEmail !== "" && res.buyerEmail !== undefined) {
+      if (
+        res.orderStatus !== 4 &&
+        res.buyerEmail !== input.buyerEmail &&
+        res.airlineCode !== input.airlineCode &&
+        res.flightNumber !== input.flightNumber
+      ) {
         buyContractStatus.code = BuyContractCode.AlreadyBought.valueOf();
         buyContractStatus.message = "Already Bought !";
         response.result = buyContractStatus;

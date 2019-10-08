@@ -627,6 +627,17 @@ type PolicyResponse {
   result: Policy!
 }
 
+type PrepareBuyContractResponse {
+  code: Float!
+  message: String!
+  result: PrepareBuyContractStatus!
+}
+
+type PrepareBuyContractStatus {
+  code: Float!
+  message: String!
+}
+
 type PutBlock {
   subChainAddress: String!
   height: Int!
@@ -754,6 +765,14 @@ type Query {
   getPendingOrdersByBuyerEmail(
     buyerEmail: String!
   ): PendingOrdersByBuyerEmailResponse!
+
+  # prepare buy contract
+  prepareBuyContract(
+    contractAddress: String!
+    buyerEmail: String!
+    airlineCode: String!
+    flightNumber: Float!
+  ): PrepareBuyContractResponse!
 
   # buy contract
   buyContract(

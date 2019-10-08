@@ -47,7 +47,7 @@ export class OrderModel {
       creatorAddress: { type: String },
       buyerAddress: { type: String },
       oracleAddress: { type: String },
-      orderStatus: { type: Number },
+      orderStatus: { type: Number }, // 0 means open, 1 means bought, 2 means reported, 3 means closed, 4 means prepare to buy
       maxBenefit: { type: Number },
       premium: { type: Number },
       flightContractName: { type: String },
@@ -124,6 +124,27 @@ export class OrderModel {
     );
   }
 
+  public prepareToBuy(
+    contractAddress: string,
+    buyerEmail: string,
+    airlineCode: string,
+    flightNumber: number
+  ): DocumentQuery<IOrderDoc | null, IOrderDoc> {
+    return this.Model.findOneAndUpdate(
+      {
+        contractAddress
+      },
+      {
+        buyerEmail: buyerEmail,
+        contractAddress: contractAddress,
+        airlineCode: airlineCode,
+        flightNumber: flightNumber,
+        orderStatus: 4
+      },
+      { new: true }
+    );
+  }
+
   public buyOrder(
     contractAddress: string,
     buyerEmail: string,
@@ -154,10 +175,14 @@ export class OrderModel {
   public getPendingOrdersByBuyerEmail(
     buyerEmail: string
   ): DocumentQuery<Array<IOrderDoc>, IOrderDoc> {
-    return this.Model.find({ buyerEmail: buyerEmail })
+    /*return this.Model.find({ buyerEmail: buyerEmail })
       .where("orderStatus")
       .ne(3) // not closed
-      .sort({ timestampEndOfDate: 1 });
+      .sort({ timestampEndOfDate: 1 });*/
+    return this.Model.find({
+      buyerEmail: buyerEmail,
+      orderStatus: { $lt: 3 }
+    }).sort({ timestampEndOfDate: 1 });
   }
 
   public getClosedOrdersByBuyerEmail(
