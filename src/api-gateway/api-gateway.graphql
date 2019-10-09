@@ -449,19 +449,16 @@ type OrderDetail {
   date: String!
   sellerEmail: String!
   buyerEmail: String!
-  scheduleTakeOff: Float!
   contractAddress: String!
   creatorAddress: String!
   buyerAddress: String!
-  platformAddress: String!
   oracleAddress: String!
   orderStatus: Float!
   flightStatus: Float!
   gain: Float!
   maxBenefit: Float!
   premium: Float!
-  flightContractId: String!
-  oracleContractId: String!
+  flightContractName: String!
 }
 
 type OrderDetails {

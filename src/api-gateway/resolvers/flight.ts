@@ -413,9 +413,6 @@ export class OrderDetail {
   @Field(_ => String)
   public buyerEmail: string;
 
-  @Field(_ => Number)
-  public scheduleTakeOff: number;
-
   @Field(_ => String)
   public contractAddress: string;
 
@@ -424,9 +421,6 @@ export class OrderDetail {
 
   @Field(_ => String)
   public buyerAddress: string;
-
-  @Field(_ => String)
-  public platformAddress: string;
 
   @Field(_ => String)
   public oracleAddress: string;
@@ -447,10 +441,7 @@ export class OrderDetail {
   public premium: number;
 
   @Field(_ => String)
-  public flightContractId: string;
-
-  @Field(_ => String)
-  public oracleContractId: string;
+  public flightContractName: string;
 }
 
 export enum OrderDetailsCode {
@@ -1003,19 +994,16 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     orderDetail.date = order.date;
     orderDetail.sellerEmail = order.sellerEmail;
     orderDetail.buyerEmail = order.buyerEmail;
-    orderDetail.scheduleTakeOff = order.scheduleTakeOff;
     orderDetail.contractAddress = order.contractAddress;
     orderDetail.creatorAddress = order.creatorAddress;
     orderDetail.buyerAddress = order.buyerAddress;
-    orderDetail.platformAddress = order.platformAddress;
     orderDetail.oracleAddress = order.oracleAddress;
     orderDetail.orderStatus = orderStatus;
     orderDetail.flightStatus = flightStatus;
     orderDetail.gain = 0;
     orderDetail.maxBenefit = order.maxBenefit;
     orderDetail.premium = order.premium;
-    orderDetail.flightContractId = order.flightContractId;
-    orderDetail.oracleContractId = order.oracleContractId;
+    orderDetail.flightContractName = order.flightContractName;
     return orderDetail;
   }
 
@@ -1043,6 +1031,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         response.result = orderDetails;
         orderDetails.code = OrderDetailsCode.UserNotMatch.valueOf();
         orderDetails.message = " Can Not Get Other's Order History !";
+        orderDetails.total = 0;
 
         return response;
       }
@@ -1052,6 +1041,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       response.result = orderDetails;
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "";
+      orderDetails.total = 0;
 
       if (e.name === "TokenExpiredError") {
         response.code = StatusCode.TokenExpired.valueOf();
@@ -1074,6 +1064,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       if (res.length === 0) {
         orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
         orderDetails.message = "User Not Found !";
+        orderDetails.total = 0;
         return response;
       }
 
@@ -1168,6 +1159,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         response.result = orderDetails;
         orderDetails.code = OrderDetailsCode.UserNotMatch.valueOf();
         orderDetails.message = " Can Not Get Other's Order History !";
+        orderDetails.total = 0;
         orderDetails.haveClosedOrders = false;
 
         return response;
@@ -1178,6 +1170,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       response.result = orderDetails;
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "";
+      orderDetails.total = 0;
       orderDetails.haveClosedOrders = false;
 
       if (e.name === "TokenExpiredError") {
@@ -1200,6 +1193,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       if (res.length === 0) {
         orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
         orderDetails.message = "User Not Found !";
+        orderDetails.total = 0;
         orderDetails.haveClosedOrders = false;
         return response;
       }
@@ -1243,7 +1237,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
           if (orderStatus.toNumber() === 1) {
             const tcSeconds = new Date().getTime() / 1000;
-            if (tcSeconds < order.scheduleTakeOff) {
+            if (tcSeconds < order.timestampEndOfDate) {
               orderStatusCode = OrderStatusCode.WaitToFly.valueOf();
             } else {
               orderStatusCode = OrderStatusCode.OrderProcessing.valueOf();
