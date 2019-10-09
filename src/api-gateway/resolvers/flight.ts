@@ -51,7 +51,7 @@ export interface IContext {
 
 const WEI_TO_ETHER = 1000000000000000000;
 const CONTRACT_NAME = "two";
-const TESTNET_ADDRESS = "api.testnet.iotex.one:80";
+const TESTNET_ADDRESS = "api.iotex.one:80";
 const RPC_TIMEOUT = 10000;
 const ADMIN_PK =
   "7a90c8bb40be77f6328e3eb9b02012a8ba9eda206f248ab16df7bdc32b838bf4";
@@ -715,14 +715,14 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     /*await model.order.upsertOrder(
       "",
       0,
-      "2019-10-10",
+      "2019-10-11",
       "",
       "",
-      1570751940,
-      "io15wls07kjqzv97573l4dyaptjxavv4lmq5nk9st",
-      "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
-      "io19dvyeuwpc9lvjx6tu3ndepw3zuvsfdqj8jmk6v",
-      "io1vlctxpm5gylma07vuyt6lxhuasnsftwrvq36z5",
+      1570838340,
+      "io1d86vu35c22dwqr0z5ygjj5qxyxw56swgg4lt58",
+      "io1wlg5jfuzrsmzpfetzl6zaef7e99jywvfruqnr9",
+      "",
+      "io108e4wn2ypsss98hvhr57ue4j8vnvhjeczwhtfy",
       0,
       10000000000000000000,
       5000000000000000000,
@@ -1451,7 +1451,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       contractConfig.contractName = res.name;
       contractConfig.contractAbi = res.abi;
       contractConfig.contractBin = res.bin;
-      contractConfig.blockchainAddress = "api.testnet.iotex.one:80";
+      contractConfig.blockchainAddress = TESTNET_ADDRESS;
       response.result = contractConfig;
 
       contractConfig.code = ContractConfigCode.Success.valueOf();
