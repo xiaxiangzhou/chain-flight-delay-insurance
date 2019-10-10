@@ -361,6 +361,12 @@ type GetEpochMetaResponse {
   blockProducersInfo: [BlockProducerInfo!]!
 }
 
+type GetQuoteResponse {
+  code: Float!
+  message: String!
+  result: TokenQuote!
+}
+
 type GetReceiptByActionResponse {
   receiptInfo: ReceiptInfo
 }
@@ -784,6 +790,9 @@ type Query {
 
   # read contract config
   getContractConfig: ContractConfigResponse!
+
+  # read contract config
+  getQuote(tokenCode: Float!): GetQuoteResponse!
   fetchCoinPrice: CoinPrice!
   fetchVersionInfo: VersionInfo!
 
@@ -978,6 +987,12 @@ type Timestamp {
 input TimestampInput {
   seconds: Int!
   nanos: Int!
+}
+
+type TokenQuote {
+  code: Float!
+  message: String!
+  priceInUsd: Float!
 }
 
 type Transfer {

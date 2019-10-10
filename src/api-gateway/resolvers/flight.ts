@@ -57,6 +57,8 @@ const ADMIN_PK =
   "7a90c8bb40be77f6328e3eb9b02012a8ba9eda206f248ab16df7bdc32b838bf4";
 export const SECRET_KEY =
   "88E33784A3CBA2D17820C6F3991839FA7ECD90BFFDE675E09C83E86344780A4E";
+const IOTEX_COINMARKETCAP_ID = 2777;
+const COINMARKETCAP_TOKEN = "9b443168-ed88-403a-87a9-6944d1443004";
 
 export enum StatusCode {
   Success,
@@ -70,6 +72,10 @@ export enum FlightOrderStatusCode {
   NotSupported,
   NoOrder,
   DateError
+}
+
+export enum TokenCode {
+  Iotex
 }
 
 registerEnumType(StatusCode, {
@@ -372,6 +378,12 @@ export enum OrderStatusCode {
   StatusUnknown
 }
 
+export enum GetQuoteStatusCode {
+  Success,
+  NotSupport,
+  InternalServerError
+}
+
 export enum FlightStatusCode {
   Unknown,
   OnTime,
@@ -600,10 +612,40 @@ export class ContractConfigResponse {
   public result: ContractConfig;
 }
 
+@ObjectType()
+export class TokenQuote {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => Number)
+  public priceInUsd: number;
+}
+
+@ObjectType()
+export class GetQuoteResponse {
+  @Field(_ => Number)
+  public code: number;
+
+  @Field(_ => String)
+  public message: string;
+
+  @Field(_ => TokenQuote)
+  public result: TokenQuote;
+}
+
 @ArgsType()
 export class ContractByNameRequest {
   @Field(_ => String)
   public name: string;
+}
+
+@ArgsType()
+export class GetQuoteRequest {
+  @Field(_ => Number)
+  public tokenCode: number;
 }
 
 export enum BuyContractCode {
@@ -706,11 +748,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     /*await model.order.upsertOrder(
       "",
       0,
-      "2019-10-11",
+      "2019-10-13",
       "",
       "",
-      1570838340,
-      "io1d86vu35c22dwqr0z5ygjj5qxyxw56swgg4lt58",
+      1571011140,
+      "io1lccuv98nvlhycm8s53uvk3gm4dwucg66vgq3h9",
       "io1wlg5jfuzrsmzpfetzl6zaef7e99jywvfruqnr9",
       "",
       "io108e4wn2ypsss98hvhr57ue4j8vnvhjeczwhtfy",
@@ -1460,6 +1502,64 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       contractConfig.contractBin = "";
       response.result = contractConfig;
 
+      return response;
+    }
+  }
+
+  @Query(_ => GetQuoteResponse, {
+    description: "read contract config"
+  })
+  public async getQuote(
+    @Args(_ => GetQuoteRequest)
+    input: GetQuoteRequest
+  ): Promise<GetQuoteResponse> {
+    const response = new GetQuoteResponse();
+    response.code = StatusCode.Success.valueOf();
+    response.message = "";
+    const tokenQuote = new TokenQuote();
+    tokenQuote.priceInUsd = 0;
+    response.result = tokenQuote;
+
+    try {
+      if (input.tokenCode !== TokenCode.Iotex) {
+        tokenQuote.code = GetQuoteStatusCode.NotSupport.valueOf();
+        tokenQuote.message = "Not Support!";
+        return response;
+      }
+
+      const rp = require("request-promise");
+      const requestOptions = {
+        method: "GET",
+        uri:
+          "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+        qs: {
+          id: IOTEX_COINMARKETCAP_ID,
+          convert: "USD"
+        },
+        headers: {
+          "X-CMC_PRO_API_KEY": COINMARKETCAP_TOKEN
+        },
+        json: true,
+        gzip: true
+      };
+
+      let re = await rp(requestOptions);
+      if (re["status"]["error_code"] === 0) {
+        tokenQuote.priceInUsd =
+          re["data"][IOTEX_COINMARKETCAP_ID.toString()]["quote"]["USD"][
+            "price"
+          ];
+        tokenQuote.code = GetQuoteStatusCode.Success.valueOf();
+        tokenQuote.message = "";
+      } else {
+        tokenQuote.code = GetQuoteStatusCode.InternalServerError.valueOf();
+        tokenQuote.message = "Internal Error";
+      }
+      return response;
+    } catch (e) {
+      response.code = StatusCode.InternalServerError.valueOf();
+      tokenQuote.code = GetQuoteStatusCode.InternalServerError.valueOf();
+      tokenQuote.message = "Internal Error";
       return response;
     }
   }
