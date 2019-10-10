@@ -992,7 +992,7 @@ input TimestampInput {
 type TokenQuote {
   code: Float!
   message: String!
-  priceInUsd: Float!
+  priceInUsd: String!
 }
 
 type Transfer {

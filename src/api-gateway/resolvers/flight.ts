@@ -620,8 +620,8 @@ export class TokenQuote {
   @Field(_ => String)
   public message: string;
 
-  @Field(_ => Number)
-  public priceInUsd: number;
+  @Field(_ => String)
+  public priceInUsd: string;
 }
 
 @ObjectType()
@@ -1517,7 +1517,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     response.code = StatusCode.Success.valueOf();
     response.message = "";
     const tokenQuote = new TokenQuote();
-    tokenQuote.priceInUsd = 0;
+    tokenQuote.priceInUsd = "0";
     response.result = tokenQuote;
 
     try {
@@ -1543,12 +1543,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         gzip: true
       };
 
-      let re = await rp(requestOptions);
-      if (re["status"]["error_code"] === 0) {
-        tokenQuote.priceInUsd =
-          re["data"][IOTEX_COINMARKETCAP_ID.toString()]["quote"]["USD"][
-            "price"
-          ];
+      const re = await rp(requestOptions);
+      if (re.status.error_code === 0) {
+        tokenQuote.priceInUsd = re.data[
+          IOTEX_COINMARKETCAP_ID.toString()
+        ].quote.USD.price.toString();
         tokenQuote.code = GetQuoteStatusCode.Success.valueOf();
         tokenQuote.message = "";
       } else {
