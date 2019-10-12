@@ -86,8 +86,8 @@ registerEnumType(StatusCode, {
 
 @ObjectType()
 export class Order {
-  @Field(_ => Number)
-  public maxBenefit: number;
+  @Field(_ => String)
+  public maxBenefit: string;
 
   @Field(_ => String)
   public creatorAddress: string;
@@ -140,11 +140,11 @@ export class Policy {
   @Field(_ => TokenPrice)
   public tokenPrice: TokenPrice;
 
-  @Field(_ => Number)
-  public premium: number;
+  @Field(_ => String)
+  public premium: string;
 
-  @Field(_ => Number)
-  public traditionalMaxBenefit: number;
+  @Field(_ => String)
+  public traditionalMaxBenefit: string;
 
   @Field(_ => Number)
   public unknown: number;
@@ -212,11 +212,11 @@ export class Recommand {
   @Field(_ => Number)
   public flightNumber: number;
 
-  @Field(_ => Number)
-  public premium: number;
+  @Field(_ => String)
+  public premium: string;
 
-  @Field(_ => Number)
-  public maxBenefit: number;
+  @Field(_ => String)
+  public maxBenefit: string;
 }
 
 @ObjectType()
@@ -272,8 +272,8 @@ export class OngoingPayout {
   @Field(_ => Number)
   public payTime: number;
 
-  @Field(_ => Number)
-  public pay: number;
+  @Field(_ => String)
+  public pay: string;
 }
 
 @ObjectType()
@@ -472,11 +472,11 @@ export class OrderDetail {
   @Field(_ => Number)
   public gain: number;
 
-  @Field(_ => Number)
-  public maxBenefit: number;
+  @Field(_ => String)
+  public maxBenefit: string;
 
-  @Field(_ => Number)
-  public premium: number;
+  @Field(_ => String)
+  public premium: string;
 
   @Field(_ => String)
   public flightContractName: string;
@@ -772,7 +772,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   }
 
   private async getTokenPrice(): Promise<TokenPrice> {
-    let tokenPrice = new TokenPrice();
+    const tokenPrice = new TokenPrice();
     tokenPrice.tokenCode = TOKEN_CODE;
     tokenPrice.fiatCode = FIAT_CODE;
 
@@ -888,7 +888,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       const order = new Order();
       order.contractAddress = row.contractAddress;
       order.creatorAddress = row.creatorAddress;
-      order.maxBenefit = row.maxBenefit / WEI_TO_ETHER;
+      order.maxBenefit = (row.maxBenefit / WEI_TO_ETHER).toString();
       detail.orders.push(order);
     }
 
@@ -949,8 +949,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
     const policy = new Policy();
     policy.tokenPrice = await this.getTokenPrice();
-    policy.premium = 5;
-    policy.traditionalMaxBenefit = 50;
+    policy.premium = "5";
+    policy.traditionalMaxBenefit = "50";
     policy.unknown = 0;
     policy.ontime = 0;
     policy.cancel = 100;
@@ -1000,8 +1000,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         const recommand = new Recommand();
         recommand.airLineCode = row.airlineCode;
         recommand.flightNumber = row.flightNumber;
-        recommand.premium = row.premium / WEI_TO_ETHER;
-        recommand.maxBenefit = row.maxBenefit / WEI_TO_ETHER;
+        recommand.premium = (row.premium / WEI_TO_ETHER).toString();
+        recommand.maxBenefit = (row.maxBenefit / WEI_TO_ETHER).toString();
         recommands.recommands.push(recommand);
       }
 
@@ -1054,7 +1054,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         payout.flightNumber = rawPayout.flightNumber;
         payout.scheduleTakeOff = rawPayout.scheduleTakeOff;
         payout.payTime = rawPayout.payTime;
-        payout.pay = rawPayout.pay;
+        payout.pay = (rawPayout.pay / WEI_TO_ETHER).toString();
         payouts.payouts.push(payout);
       }
 
@@ -1118,8 +1118,8 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     orderDetail.orderStatus = orderStatus;
     orderDetail.flightStatus = flightStatus;
     orderDetail.gain = 0;
-    orderDetail.maxBenefit = order.maxBenefit;
-    orderDetail.premium = order.premium;
+    orderDetail.maxBenefit = (order.maxBenefit / WEI_TO_ETHER).toString();
+    orderDetail.premium = (order.premium / WEI_TO_ETHER).toString();
     orderDetail.flightContractName = order.flightContractName;
     return orderDetail;
   }
