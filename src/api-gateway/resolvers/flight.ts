@@ -1178,13 +1178,13 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       const res = await model.user.findUser(input.buyerEmail);
       const orderDetails = new OrderDetails();
       orderDetails.orderDetails = [];
+      orderDetails.tokenPrice = await this.getTokenPrice();
       response.result = orderDetails;
 
       if (res.length === 0) {
         orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
         orderDetails.message = "User Not Found !";
         orderDetails.total = 0;
-        orderDetails.tokenPrice = await this.getTokenPrice();
         return response;
       }
 
