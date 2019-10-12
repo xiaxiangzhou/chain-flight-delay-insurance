@@ -59,6 +59,8 @@ export const SECRET_KEY =
   "88E33784A3CBA2D17820C6F3991839FA7ECD90BFFDE675E09C83E86344780A4E";
 const IOTEX_COINMARKETCAP_ID = 2777;
 const COINMARKETCAP_TOKEN = "9b443168-ed88-403a-87a9-6944d1443004";
+const TOKEN_CODE = "IOTX";
+const FIAT_CODE = "$";
 
 export enum StatusCode {
   Success,
@@ -95,12 +97,27 @@ export class Order {
 }
 
 @ObjectType()
+export class TokenPrice {
+  @Field(_ => String)
+  public tokenPriceInFiat: string;
+
+  @Field(_ => String)
+  public fiatCode: string;
+
+  @Field(_ => String)
+  public tokenCode: string;
+}
+
+@ObjectType()
 export class FlightDetail {
   @Field(_ => Number)
   public flightOrderStatusCode: number;
 
   @Field(_ => String)
   public flightOrderStatusMessage: string;
+
+  @Field(_ => TokenPrice)
+  public tokenPrice: TokenPrice;
 
   @Field(_ => [Order], { nullable: true })
   public orders: Array<Order>;
@@ -120,6 +137,9 @@ export class FlightDetailResponse {
 
 @ObjectType()
 export class Policy {
+  @Field(_ => TokenPrice)
+  public tokenPrice: TokenPrice;
+
   @Field(_ => Number)
   public premium: number;
 
@@ -204,6 +224,9 @@ export class Recommands {
   @Field(_ => Number)
   public total: number;
 
+  @Field(_ => TokenPrice)
+  public tokenPrice: TokenPrice;
+
   @Field(_ => [Recommand], { nullable: true })
   public recommands: Array<Recommand>;
 }
@@ -257,6 +280,9 @@ export class OngoingPayout {
 export class OngoingPayouts {
   @Field(_ => Number)
   public total: number;
+
+  @Field(_ => TokenPrice)
+  public tokenPrice: TokenPrice;
 
   @Field(_ => [OngoingPayout], { nullable: true })
   public payouts: Array<OngoingPayout>;
@@ -474,6 +500,9 @@ export class OrderDetails {
   @Field(_ => Number)
   public total: number;
 
+  @Field(_ => TokenPrice)
+  public tokenPrice: TokenPrice;
+
   @Field(_ => [OrderDetail], { nullable: true })
   public orderDetails: Array<OrderDetail>;
 }
@@ -491,6 +520,9 @@ export class PendingOrderDetails {
 
   @Field(_ => Number)
   public total: number;
+
+  @Field(_ => TokenPrice)
+  public tokenPrice: TokenPrice;
 
   @Field(_ => [OrderDetail], { nullable: true })
   public orderDetails: Array<OrderDetail>;
@@ -620,8 +652,8 @@ export class TokenQuote {
   @Field(_ => String)
   public message: string;
 
-  @Field(_ => String)
-  public priceInUsd: string;
+  @Field(_ => TokenPrice)
+  public tokenPrice: TokenPrice;
 }
 
 @ObjectType()
@@ -739,6 +771,43 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     return "OK";
   }
 
+  private async getTokenPrice(): Promise<TokenPrice> {
+    let tokenPrice = new TokenPrice();
+    tokenPrice.tokenCode = TOKEN_CODE;
+    tokenPrice.fiatCode = FIAT_CODE;
+
+    try {
+      const rp = require("request-promise");
+      const requestOptions = {
+        method: "GET",
+        uri:
+          "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+        qs: {
+          id: IOTEX_COINMARKETCAP_ID,
+          convert: "USD"
+        },
+        headers: {
+          "X-CMC_PRO_API_KEY": COINMARKETCAP_TOKEN
+        },
+        json: true,
+        gzip: true
+      };
+
+      const re = await rp(requestOptions);
+      if (re.status.error_code === 0) {
+        tokenPrice.tokenPriceInFiat = re.data[
+          IOTEX_COINMARKETCAP_ID.toString()
+        ].quote.USD.price.toString();
+      } else {
+        tokenPrice.tokenPriceInFiat = "0";
+      }
+    } catch (e) {
+      tokenPrice.tokenPriceInFiat = "0";
+    }
+
+    return tokenPrice;
+  }
+
   @Query(_ => FlightDetailResponse, { description: "read flight detail" })
   public async getFlightDetail(
     @Args(_ => FlightDetailRequest)
@@ -771,6 +840,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       const detail = new FlightDetail();
       detail.flightOrderStatusCode = FlightOrderStatusCode.DateError.valueOf();
       detail.flightOrderStatusMessage = "Month or Day is not correct";
+      detail.tokenPrice = await this.getTokenPrice();
       detail.orders = [];
 
       const response = new FlightDetailResponse();
@@ -801,6 +871,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       const detail = new FlightDetail();
       detail.flightOrderStatusCode = FlightOrderStatusCode.NoOrder.valueOf();
       detail.flightOrderStatusMessage = "No Order In This Flight";
+      detail.tokenPrice = await this.getTokenPrice();
       detail.orders = [];
 
       const response = new FlightDetailResponse();
@@ -823,6 +894,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
     detail.flightOrderStatusCode = FlightOrderStatusCode.Normal.valueOf();
     detail.flightOrderStatusMessage = "";
+    detail.tokenPrice = await this.getTokenPrice();
 
     const response = new FlightDetailResponse();
     response.code = StatusCode.Success.valueOf();
@@ -876,6 +948,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     //return gateways.antenna.readContract(input);
 
     const policy = new Policy();
+    policy.tokenPrice = await this.getTokenPrice();
     policy.premium = 5;
     policy.traditionalMaxBenefit = 50;
     policy.unknown = 0;
@@ -915,6 +988,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     try {
       const count = await model.recommandation.countRecommandations();
       recommands.total = count;
+      recommands.tokenPrice = await this.getTokenPrice();
 
       const startPoint = input.pageNum * input.pageSize;
       const rows = await model.recommandation.getRecommandations(
@@ -965,6 +1039,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     try {
       const count = await model.payout.countPayouts();
       payouts.total = count;
+      payouts.tokenPrice = await this.getTokenPrice();
 
       const rawPayouts = await model.payout.getPayout(
         startPoint,
@@ -1020,12 +1095,12 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     return response;
   }
 
-  private orderToOrderDetail(
+  private async orderToOrderDetail(
     flightsSearch: { [id: string]: IFlightDoc },
     order: IOrderDoc,
     orderStatus: number,
     flightStatus: number
-  ): OrderDetail {
+  ): Promise<OrderDetail> {
     const orderDetail = new OrderDetail();
     orderDetail.airlineCode = order.airlineCode;
     orderDetail.flightNumber = order.flightNumber;
@@ -1074,6 +1149,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         orderDetails.code = OrderDetailsCode.UserNotMatch.valueOf();
         orderDetails.message = " Can Not Get Other's Order History !";
         orderDetails.total = 0;
+        orderDetails.tokenPrice = await this.getTokenPrice();
 
         return response;
       }
@@ -1084,6 +1160,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "";
       orderDetails.total = 0;
+      orderDetails.tokenPrice = await this.getTokenPrice();
 
       if (e.name === "TokenExpiredError") {
         response.code = StatusCode.TokenExpired.valueOf();
@@ -1107,6 +1184,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
         orderDetails.message = "User Not Found !";
         orderDetails.total = 0;
+        orderDetails.tokenPrice = await this.getTokenPrice();
         return response;
       }
 
@@ -1153,7 +1231,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         } catch (e) {}
 
         response.result.orderDetails.push(
-          this.orderToOrderDetail(
+          await this.orderToOrderDetail(
             flightsSearch,
             order,
             OrderStatusCode.OrderClosed.valueOf(),
@@ -1171,6 +1249,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "Internal Server Error !";
       orderDetails.total = 0;
+      orderDetails.tokenPrice = await this.getTokenPrice();
       response.result = orderDetails;
 
       return response;
@@ -1202,6 +1281,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         orderDetails.code = OrderDetailsCode.UserNotMatch.valueOf();
         orderDetails.message = " Can Not Get Other's Order History !";
         orderDetails.total = 0;
+        orderDetails.tokenPrice = await this.getTokenPrice();
         orderDetails.haveClosedOrders = false;
 
         return response;
@@ -1213,6 +1293,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "";
       orderDetails.total = 0;
+      orderDetails.tokenPrice = await this.getTokenPrice();
       orderDetails.haveClosedOrders = false;
 
       if (e.name === "TokenExpiredError") {
@@ -1236,6 +1317,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
         orderDetails.message = "User Not Found !";
         orderDetails.total = 0;
+        orderDetails.tokenPrice = await this.getTokenPrice();
         orderDetails.haveClosedOrders = false;
         return response;
       }
@@ -1298,7 +1380,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
         } catch (e) {}
 
         response.result.orderDetails.push(
-          this.orderToOrderDetail(
+          await this.orderToOrderDetail(
             flightsSearch,
             order,
             orderStatusCode,
@@ -1325,6 +1407,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       orderDetails.code = OrderDetailsCode.InternalServerError.valueOf();
       orderDetails.message = "Internal Server Error !";
       orderDetails.total = 0;
+      orderDetails.tokenPrice = await this.getTokenPrice();
       response.result = orderDetails;
       orderDetails.haveClosedOrders = false;
       return response;
@@ -1517,49 +1600,27 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     response.code = StatusCode.Success.valueOf();
     response.message = "";
     const tokenQuote = new TokenQuote();
-    tokenQuote.priceInUsd = "0";
     response.result = tokenQuote;
 
-    try {
-      if (input.tokenCode !== TokenCode.Iotex) {
-        tokenQuote.code = GetQuoteStatusCode.NotSupport.valueOf();
-        tokenQuote.message = "Not Support!";
-        return response;
-      }
-
-      const rp = require("request-promise");
-      const requestOptions = {
-        method: "GET",
-        uri:
-          "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-        qs: {
-          id: IOTEX_COINMARKETCAP_ID,
-          convert: "USD"
-        },
-        headers: {
-          "X-CMC_PRO_API_KEY": COINMARKETCAP_TOKEN
-        },
-        json: true,
-        gzip: true
-      };
-
-      const re = await rp(requestOptions);
-      if (re.status.error_code === 0) {
-        tokenQuote.priceInUsd = re.data[
-          IOTEX_COINMARKETCAP_ID.toString()
-        ].quote.USD.price.toString();
-        tokenQuote.code = GetQuoteStatusCode.Success.valueOf();
-        tokenQuote.message = "";
-      } else {
-        tokenQuote.code = GetQuoteStatusCode.InternalServerError.valueOf();
-        tokenQuote.message = "Internal Error";
-      }
-      return response;
-    } catch (e) {
-      response.code = StatusCode.InternalServerError.valueOf();
-      tokenQuote.code = GetQuoteStatusCode.InternalServerError.valueOf();
-      tokenQuote.message = "Internal Error";
+    if (input.tokenCode !== TokenCode.Iotex) {
+      tokenQuote.code = GetQuoteStatusCode.NotSupport.valueOf();
+      tokenQuote.message = "Not Support!";
+      tokenQuote.tokenPrice = new TokenPrice();
+      tokenQuote.tokenPrice.fiatCode = FIAT_CODE;
+      tokenQuote.tokenPrice.tokenCode = "";
+      tokenQuote.tokenPrice.tokenPriceInFiat = "0";
       return response;
     }
+
+    tokenQuote.tokenPrice = await this.getTokenPrice();
+    if (tokenQuote.tokenPrice.tokenPriceInFiat === "0") {
+      tokenQuote.code = GetQuoteStatusCode.InternalServerError.valueOf();
+      tokenQuote.message = "Internal Error";
+    } else {
+      tokenQuote.code = GetQuoteStatusCode.Success.valueOf();
+      tokenQuote.message = "";
+    }
+
+    return response;
   }
 }

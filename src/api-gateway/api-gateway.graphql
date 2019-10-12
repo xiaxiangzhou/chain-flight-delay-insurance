@@ -296,6 +296,7 @@ type Flight {
 type FlightDetail {
   flightOrderStatusCode: Float!
   flightOrderStatusMessage: String!
+  tokenPrice: TokenPrice!
   orders: [Order!]
 }
 
@@ -438,6 +439,7 @@ type OngoingPayoutResponse {
 
 type OngoingPayouts {
   total: Float!
+  tokenPrice: TokenPrice!
   payouts: [OngoingPayout!]
 }
 
@@ -471,6 +473,7 @@ type OrderDetails {
   code: Float!
   message: String!
   total: Float!
+  tokenPrice: TokenPrice!
   orderDetails: [OrderDetail!]
 }
 
@@ -485,6 +488,7 @@ type PendingOrderDetails {
   message: String!
   haveClosedOrders: Boolean!
   total: Float!
+  tokenPrice: TokenPrice!
   orderDetails: [OrderDetail!]
 }
 
@@ -605,6 +609,7 @@ input PlumTransferInput {
 }
 
 type Policy {
+  tokenPrice: TokenPrice!
   premium: Float!
   traditionalMaxBenefit: Float!
   unknown: Float!
@@ -858,6 +863,7 @@ type RecommandResponse {
 
 type Recommands {
   total: Float!
+  tokenPrice: TokenPrice!
   recommands: [Recommand!]
 }
 
@@ -989,10 +995,16 @@ input TimestampInput {
   nanos: Int!
 }
 
+type TokenPrice {
+  tokenPriceInFiat: String!
+  fiatCode: String!
+  tokenCode: String!
+}
+
 type TokenQuote {
   code: Float!
   message: String!
-  priceInUsd: String!
+  tokenPrice: TokenPrice!
 }
 
 type Transfer {
