@@ -428,7 +428,7 @@ type OngoingPayout {
   flightNumber: Float!
   scheduleTakeOff: Float!
   payTime: Float!
-  pay: Float!
+  pay: String!
 }
 
 type OngoingPayoutResponse {
@@ -444,7 +444,7 @@ type OngoingPayouts {
 }
 
 type Order {
-  maxBenefit: Float!
+  maxBenefit: String!
   creatorAddress: String!
   contractAddress: String!
 }
@@ -464,8 +464,8 @@ type OrderDetail {
   orderStatus: Float!
   flightStatus: Float!
   gain: Float!
-  maxBenefit: Float!
-  premium: Float!
+  maxBenefit: String!
+  premium: String!
   flightContractName: String!
 }
 
@@ -610,8 +610,8 @@ input PlumTransferInput {
 
 type Policy {
   tokenPrice: TokenPrice!
-  premium: Float!
-  traditionalMaxBenefit: Float!
+  premium: String!
+  traditionalMaxBenefit: String!
   unknown: Float!
   ontime: Float!
   cancel: Float!
@@ -851,8 +851,8 @@ type ReceiptInfo {
 type Recommand {
   airLineCode: String!
   flightNumber: Float!
-  premium: Float!
-  maxBenefit: Float!
+  premium: String!
+  maxBenefit: String!
 }
 
 type RecommandResponse {

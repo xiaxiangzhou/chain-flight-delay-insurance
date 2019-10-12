@@ -1312,12 +1312,12 @@ export class FlightsResolver implements ResolverInterface<() => String> {
       const orderDetails = new PendingOrderDetails();
       orderDetails.orderDetails = [];
       response.result = orderDetails;
+      response.result.tokenPrice = await this.getTokenPrice();
 
       if (res.length === 0) {
         orderDetails.code = OrderDetailsCode.UserNotFound.valueOf();
         orderDetails.message = "User Not Found !";
         orderDetails.total = 0;
-        orderDetails.tokenPrice = await this.getTokenPrice();
         orderDetails.haveClosedOrders = false;
         return response;
       }
