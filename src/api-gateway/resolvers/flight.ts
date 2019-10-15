@@ -50,7 +50,8 @@ export interface IContext {
 ];*/
 
 const WEI_TO_ETHER = 1000000000000000000;
-const CONTRACT_NAME = "two";
+const PREMIUM = "1000";
+const CONTRACT_NAME = "three";
 const TESTNET_ADDRESS = "api.iotex.one:80";
 const RPC_TIMEOUT = 10000;
 const ADMIN_PK =
@@ -949,7 +950,7 @@ export class FlightsResolver implements ResolverInterface<() => String> {
 
     const policy = new Policy();
     policy.tokenPrice = await this.getTokenPrice();
-    policy.premium = "5";
+    policy.premium = PREMIUM;
     policy.traditionalMaxBenefit = "50";
     policy.unknown = 0;
     policy.ontime = 0;
