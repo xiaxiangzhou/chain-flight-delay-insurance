@@ -823,6 +823,9 @@ type Query {
     token: String!
     hashedNewPassword: String!
   ): ResetPasswordFinishResponse!
+
+  # register user
+  versionUpdate(version: String!): VersionUpdateResponse!
 }
 
 type ReadContractResponse {
@@ -1046,4 +1049,18 @@ type UserRegisterStatus {
 type VersionInfo {
   explorerVersion: String!
   iotexCoreVersion: String
+}
+
+type VersionUpdate {
+  code: Float!
+  message: String!
+  changeList: String!
+  forceUpdate: Boolean!
+  apkDownloadUrl: String!
+}
+
+type VersionUpdateResponse {
+  code: Float!
+  message: String!
+  result: VersionUpdate!
 }

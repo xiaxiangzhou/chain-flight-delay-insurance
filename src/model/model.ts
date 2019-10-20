@@ -6,6 +6,7 @@ import { OrderModel } from "./order";
 import { PayoutModel } from "./payout";
 import { RecommandationModel } from "./recommandation";
 import { UserModel } from "./user";
+import { VersionModel } from "./version";
 
 export type Model = {
   user: UserModel;
@@ -14,6 +15,7 @@ export type Model = {
   recommandation: RecommandationModel;
   payout: PayoutModel;
   contract: ContractModel;
+  version: VersionModel;
 };
 
 export function setModel(server: MyServer): void {
@@ -25,4 +27,5 @@ export function setModel(server: MyServer): void {
   server.model.recommandation = new RecommandationModel(server.gateways);
   server.model.payout = new PayoutModel(server.gateways);
   server.model.contract = new ContractModel(server.gateways);
+  server.model.version = new VersionModel(server.gateways);
 }

@@ -10,6 +10,7 @@ import { AntennaResolver } from "../api-gateway/resolvers/antenna";
 import { FlightsResolver } from "../api-gateway/resolvers/flight";
 import { MetaResolver } from "../api-gateway/resolvers/meta";
 import { UserResolver } from "../api-gateway/resolvers/user";
+import { VersionResolver } from "../api-gateway/resolvers/version";
 import { Model, setModel } from "../model";
 import "../shared/common/setup-big-number";
 import { setGateways } from "./gateways/gateways";
@@ -22,6 +23,7 @@ export type MyServer = Server & {
     | typeof AntennaResolver
     | typeof FlightsResolver
     | typeof UserResolver
+    | typeof VersionResolver
   >;
   model: Model;
   gateways: {

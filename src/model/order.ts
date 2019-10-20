@@ -47,7 +47,7 @@ export class OrderModel {
       creatorAddress: { type: String },
       buyerAddress: { type: String },
       oracleAddress: { type: String },
-      orderStatus: { type: Number }, // 0 means open, 1 means bought, 2 means reported, 3 means closed, 4 means prepare to buy
+      orderStatus: { type: Number }, // 0 means open, 1 means bought, 2 means reported, 3 means closed, 4 means prepare to buy, 5 means cancelled
       maxBenefit: { type: Number },
       premium: { type: Number },
       flightContractName: { type: String },

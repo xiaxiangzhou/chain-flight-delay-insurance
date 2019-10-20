@@ -8,13 +8,15 @@ import { AntennaResolver } from "./resolvers/antenna";
 import { FlightsResolver } from "./resolvers/flight";
 import { MetaResolver } from "./resolvers/meta";
 import { UserResolver } from "./resolvers/user";
+import { VersionResolver } from "./resolvers/version";
 
 export async function setApiGateway(server: MyServer): Promise<void> {
   const resolvers = [
     MetaResolver,
     AntennaResolver,
     FlightsResolver,
-    UserResolver
+    UserResolver,
+    VersionResolver
   ];
   server.resolvers = resolvers;
 
