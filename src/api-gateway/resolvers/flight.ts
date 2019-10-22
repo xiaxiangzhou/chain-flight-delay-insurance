@@ -64,7 +64,7 @@ const TOKEN_CODE = "IOTX";
 const FIAT_CODE = "$";
 const POLICY = [
   0,
-  11.1,
+  0,
   100,
   0,
   12.5,
