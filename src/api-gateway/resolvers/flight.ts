@@ -62,6 +62,23 @@ const IOTEX_COINMARKETCAP_ID = 2777;
 const COINMARKETCAP_TOKEN = "9b443168-ed88-403a-87a9-6944d1443004";
 const TOKEN_CODE = "IOTX";
 const FIAT_CODE = "$";
+const POLICY = [
+  0,
+  11.1,
+  100,
+  0,
+  12.5,
+  16.6,
+  33.4,
+  50,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100
+];
 
 export enum StatusCode {
   Success,
@@ -952,21 +969,21 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     policy.tokenPrice = await this.getTokenPrice();
     policy.premium = PREMIUM;
     policy.traditionalMaxBenefit = "50";
-    policy.unknown = 0;
-    policy.ontime = 0;
-    policy.cancel = 100;
-    policy.divert = 0;
-    policy.delay0h = 12.5;
-    policy.delay1h = 16.6;
-    policy.delay2h = 33.4;
-    policy.delay3h = 50;
-    policy.delay4h = 100;
-    policy.delay5h = 100;
-    policy.delay6h = 100;
-    policy.delay7h = 100;
-    policy.delay8h = 100;
-    policy.delay9h = 100;
-    policy.delay10hplus = 100;
+    policy.unknown = POLICY[0];
+    policy.ontime = POLICY[1];
+    policy.cancel = POLICY[2];
+    policy.divert = POLICY[3];
+    policy.delay0h = POLICY[4];
+    policy.delay1h = POLICY[5];
+    policy.delay2h = POLICY[6];
+    policy.delay3h = POLICY[7];
+    policy.delay4h = POLICY[8];
+    policy.delay5h = POLICY[9];
+    policy.delay6h = POLICY[10];
+    policy.delay7h = POLICY[11];
+    policy.delay8h = POLICY[12];
+    policy.delay9h = POLICY[13];
+    policy.delay10hplus = POLICY[14];
 
     const response = new PolicyResponse();
     response.code = StatusCode.Success.valueOf();
@@ -1096,6 +1113,13 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     return response;
   }
 
+  private static async getGainFromFlightStatus(
+    flightStatus: number,
+    maxBenefit: number
+  ): Promise<number> {
+    return ((maxBenefit / WEI_TO_ETHER) * POLICY[flightStatus]) / 100;
+  }
+
   private async orderToOrderDetail(
     flightsSearch: { [id: string]: IFlightDoc },
     order: IOrderDoc,
@@ -1118,7 +1142,10 @@ export class FlightsResolver implements ResolverInterface<() => String> {
     orderDetail.oracleAddress = order.oracleAddress;
     orderDetail.orderStatus = orderStatus;
     orderDetail.flightStatus = flightStatus;
-    orderDetail.gain = 0;
+    orderDetail.gain = await FlightsResolver.getGainFromFlightStatus(
+      flightStatus,
+      order.maxBenefit
+    );
     orderDetail.maxBenefit = (order.maxBenefit / WEI_TO_ETHER).toString();
     orderDetail.premium = (order.premium / WEI_TO_ETHER).toString();
     orderDetail.flightContractName = order.flightContractName;

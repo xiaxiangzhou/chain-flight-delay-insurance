@@ -86,11 +86,11 @@ export class VersionResolver implements ResolverInterface<() => String> {
     response.result = versionUpdate;
 
     try {
-      let versions = input.version.split(".");
-      let majorVersion = Number(versions[0]);
+      const versions = input.version.split(".");
+      const majorVersion = Number(versions[0]);
 
-      let currentVersions = CURRENT_VERSION.split(".");
-      let currentMajorVersion = Number(currentVersions[0]);
+      const currentVersions = CURRENT_VERSION.split(".");
+      const currentMajorVersion = Number(currentVersions[0]);
 
       if (majorVersion > currentMajorVersion) {
         versionUpdate.code = VersionUpdateCode.IncorrectVersion.valueOf();
@@ -108,7 +108,7 @@ export class VersionResolver implements ResolverInterface<() => String> {
         return response;
       }
 
-      let versionSet = await model.version.getVersion(CURRENT_VERSION);
+      const versionSet = await model.version.getVersion(CURRENT_VERSION);
       versionUpdate.code = VersionUpdateCode.NeedUpdate.valueOf();
       versionUpdate.message = "Need Update !";
       versionUpdate.forceUpdate = true;
