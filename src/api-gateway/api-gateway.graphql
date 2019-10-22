@@ -463,7 +463,7 @@ type OrderDetail {
   oracleAddress: String!
   orderStatus: Float!
   flightStatus: Float!
-  gain: Float!
+  gain: String!
   maxBenefit: String!
   premium: String!
   flightContractName: String!

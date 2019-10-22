@@ -487,8 +487,8 @@ export class OrderDetail {
   @Field(_ => Number)
   public flightStatus: number;
 
-  @Field(_ => Number)
-  public gain: number;
+  @Field(_ => String)
+  public gain: string;
 
   @Field(_ => String)
   public maxBenefit: string;
@@ -1116,8 +1116,11 @@ export class FlightsResolver implements ResolverInterface<() => String> {
   private static async getGainFromFlightStatus(
     flightStatus: number,
     maxBenefit: number
-  ): Promise<number> {
-    return ((maxBenefit / WEI_TO_ETHER) * POLICY[flightStatus]) / 100;
+  ): Promise<string> {
+    return (
+      ((maxBenefit / WEI_TO_ETHER) * POLICY[flightStatus]) /
+      100
+    ).toString();
   }
 
   private async orderToOrderDetail(
